@@ -12,6 +12,7 @@ using namespace Rcpp;
 List RaoBlackwellCorrect(NumericMatrix beta_select,
                          NumericMatrix se_select,
                          NumericMatrix Rxy,
+                         NumericMatrix Rxysqrt,
                          double eta,
                          double cutoff,
                          int B,
@@ -33,7 +34,8 @@ List RaoBlackwellCorrect(NumericMatrix beta_select,
     Rinv_sub = arma::inv_sympd(R.submat(0, 0, p - 1, p - 1));
   }
 
-  arma::mat L = arma::chol(eta * eta * R);
+  arma::mat Rxysqrt_mat(Rxysqrt.begin(), Rxysqrt.nrow(), Rxysqrt.ncol(), false);
+  arma::mat L = eta * Rxysqrt_mat;
   arma::mat BETA_RB(m, p1, arma::fill::zeros);
   arma::mat SE_RB(m, p1, arma::fill::zeros);
   std::vector<arma::mat> CovList(m);  // to store covariance matrices

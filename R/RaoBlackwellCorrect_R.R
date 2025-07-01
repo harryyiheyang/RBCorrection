@@ -19,30 +19,30 @@
 #'
 #' @export
 RaoBlackwellCorrect_R <- function(BETA_Select, SE_Select, Rxy, eta = 1, cutoff,
-                                  B = 1000, onlyexposure=T) {
-  stopifnot(all(dim(BETA_Select) == dim(SE_Select)))
-  stopifnot(ncol(BETA_Select) == nrow(Rxy))
-  stopifnot(nrow(Rxy) == ncol(Rxy))
+                                B = 1000, onlyexposure=T) {
+stopifnot(all(dim(BETA_Select) == dim(SE_Select)))
+stopifnot(ncol(BETA_Select) == nrow(Rxy))
+stopifnot(nrow(Rxy) == ncol(Rxy))
 
-  # Ensure matrix format with dimnames
-  BETA_Select <- as.matrix(BETA_Select)
-  SE_Select <- as.matrix(SE_Select)
-  Rxy <- as.matrix(Rxy)  # fix here
+# Ensure matrix format with dimnames
+BETA_Select <- as.matrix(BETA_Select)
+SE_Select <- as.matrix(SE_Select)
+Rxy <- as.matrix(Rxy)  # fix here
+Rxysqrt = matrixsqrt(Rxy)$w
+# Ensure row and column names are present
+if (is.null(rownames(BETA_Select))) rownames(BETA_Select) <- paste0("SNP", seq_len(nrow(BETA_Select)))
+if (is.null(colnames(BETA_Select))) colnames(BETA_Select) <- paste0("Exp", seq_len(ncol(BETA_Select)))
+rownames(SE_Select) <- rownames(BETA_Select)
+colnames(SE_Select) <- colnames(BETA_Select)
 
-  # Ensure row and column names are present
-  if (is.null(rownames(BETA_Select))) rownames(BETA_Select) <- paste0("SNP", seq_len(nrow(BETA_Select)))
-  if (is.null(colnames(BETA_Select))) colnames(BETA_Select) <- paste0("Exp", seq_len(ncol(BETA_Select)))
-  rownames(SE_Select) <- rownames(BETA_Select)
-  colnames(SE_Select) <- colnames(BETA_Select)
+res <- .Call(`_RBCorrection_RaoBlackwellCorrect`, beta_select=BETA_Select, se_select=SE_Select,
+             Rxy=Rxy, Rxysqrt=Rxysqrt, eta=eta,cutoff=cutoff, B=B, onlyexposure=onlyexposure,n_threads=floor(parallel::detectCores() / 2))
+res$SE_RB=sqrt(SE_Select^2*(1+1/eta^2))
 
-  res <- .Call(`_RBCorrection_RaoBlackwellCorrect`, beta_select=BETA_Select, se_select=SE_Select,
-               Rxy=Rxy, eta=eta,cutoff=cutoff, B=B, onlyexposure=onlyexposure,n_threads=floor(parallel::detectCores() / 2))
-  res$SE_RB=sqrt(SE_Select^2*(1+1/eta^2))
+rownames(res$BETA_RB) <- rownames(BETA_Select)
+colnames(res$BETA_RB) <- colnames(BETA_Select)
+rownames(res$SE_RB) <- rownames(BETA_Select)
+colnames(res$SE_RB) <- colnames(BETA_Select)
 
-  rownames(res$BETA_RB) <- rownames(BETA_Select)
-  colnames(res$BETA_RB) <- colnames(BETA_Select)
-  rownames(res$SE_RB) <- rownames(BETA_Select)
-  colnames(res$SE_RB) <- colnames(BETA_Select)
-
-  return(res)
+return(res)
 }

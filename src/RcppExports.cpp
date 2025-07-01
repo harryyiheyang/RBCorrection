@@ -12,20 +12,21 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // RaoBlackwellCorrect
-List RaoBlackwellCorrect(NumericMatrix beta_select, NumericMatrix se_select, NumericMatrix Rxy, double eta, double cutoff, int B, bool onlyexposure, int n_threads);
-RcppExport SEXP _RBCorrection_RaoBlackwellCorrect(SEXP beta_selectSEXP, SEXP se_selectSEXP, SEXP RxySEXP, SEXP etaSEXP, SEXP cutoffSEXP, SEXP BSEXP, SEXP onlyexposureSEXP, SEXP n_threadsSEXP) {
+List RaoBlackwellCorrect(NumericMatrix beta_select, NumericMatrix se_select, NumericMatrix Rxy, NumericMatrix Rxysqrt, double eta, double cutoff, int B, bool onlyexposure, int n_threads);
+RcppExport SEXP _RBCorrection_RaoBlackwellCorrect(SEXP beta_selectSEXP, SEXP se_selectSEXP, SEXP RxySEXP, SEXP RxysqrtSEXP, SEXP etaSEXP, SEXP cutoffSEXP, SEXP BSEXP, SEXP onlyexposureSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericMatrix >::type beta_select(beta_selectSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type se_select(se_selectSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Rxy(RxySEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Rxysqrt(RxysqrtSEXP);
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< double >::type cutoff(cutoffSEXP);
     Rcpp::traits::input_parameter< int >::type B(BSEXP);
     Rcpp::traits::input_parameter< bool >::type onlyexposure(onlyexposureSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(RaoBlackwellCorrect(beta_select, se_select, Rxy, eta, cutoff, B, onlyexposure, n_threads));
+    rcpp_result_gen = Rcpp::wrap(RaoBlackwellCorrect(beta_select, se_select, Rxy, Rxysqrt, eta, cutoff, B, onlyexposure, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -45,28 +46,10 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// update_theta_e
-List update_theta_e(NumericVector by, NumericVector bx, NumericVector byse, NumericVector ThetaList, NumericVector vartheta, IntegerVector indvalid, int n_threads);
-RcppExport SEXP _RBCorrection_update_theta_e(SEXP bySEXP, SEXP bxSEXP, SEXP byseSEXP, SEXP ThetaListSEXP, SEXP varthetaSEXP, SEXP indvalidSEXP, SEXP n_threadsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericVector >::type by(bySEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type bx(bxSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type byse(byseSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type ThetaList(ThetaListSEXP);
-    Rcpp::traits::input_parameter< NumericVector >::type vartheta(varthetaSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type indvalid(indvalidSEXP);
-    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(update_theta_e(by, bx, byse, ThetaList, vartheta, indvalid, n_threads));
-    return rcpp_result_gen;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RBCorrection_RaoBlackwellCorrect", (DL_FUNC) &_RBCorrection_RaoBlackwellCorrect, 8},
+    {"_RBCorrection_RaoBlackwellCorrect", (DL_FUNC) &_RBCorrection_RaoBlackwellCorrect, 9},
     {"_RBCorrection_RaoBlackwellCorrect_UV", (DL_FUNC) &_RBCorrection_RaoBlackwellCorrect_UV, 6},
-    {"_RBCorrection_update_theta_e", (DL_FUNC) &_RBCorrection_update_theta_e, 7},
     {NULL, NULL, 0}
 };
 

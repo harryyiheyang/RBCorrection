@@ -1,4 +1,4 @@
-#' Joint IV Selection and Rao-Blackwell Correction for Multivariable MR (Simulation)
+#' Joint IV Selection and Rao-Blackwell Correction for Multivariable MR
 #'
 #' Performs joint IV selection using multivariate chi-square across exposures, followed by
 #' Rao-Blackwell correction of selected SNPs in a simulation context.
@@ -12,7 +12,7 @@
 #'
 #' @return A list with two matrices: BETA_Sub (estimates) and SE_Sub (total SEs).
 #' @export
-RB_MVJoint_Simulation <- function(BETAMatrix, SEMatrix, Rxy,
+RB_MV_Joint <- function(BETAMatrix, SEMatrix, Rxy,
                                   P_threshold = 0.05, eta = 1, B = 1000) {
   stopifnot(all(dim(BETAMatrix) == dim(SEMatrix)))
   if (is.null(rownames(BETAMatrix))) rownames(BETAMatrix) <- paste0("V", 1:nrow(BETAMatrix))
@@ -51,8 +51,6 @@ RB_MVJoint_Simulation <- function(BETAMatrix, SEMatrix, Rxy,
     onlyexposure=T
   )
 
-  BETA_Sub <- Resampling$BETA_RB
-  SE_Sub <- Resampling$SE_RB
 
-  return(list(BETA_Sub = BETA_Sub, SE_Sub = SE_Sub))
+  return(Resampling)
 }
