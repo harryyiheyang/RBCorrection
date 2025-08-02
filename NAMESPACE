@@ -1,4 +1,5 @@
 useDynLib(RBCorrection, .registration = TRUE)
+export(MRBEE_IMRP_UV)
 export(MRBEE_UV_Winner)
 export(MRBEE_Winner)
 export(RB_UV_Analytic)
