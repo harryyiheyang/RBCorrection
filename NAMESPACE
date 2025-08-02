@@ -1,0 +1,8 @@
+useDynLib(RBCorrection, .registration = TRUE)
+export(MRBEE_UV_Winner)
+export(MRBEE_Winner)
+export(RB_UV_Analytic)
+export(RaoBlackwellCorrect)
+import(CppMatrix)
+importFrom(MASS,rlm)
+importFrom(abind,abind)
