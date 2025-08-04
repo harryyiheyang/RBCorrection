@@ -15,8 +15,6 @@
 #' @param var.est Method for estimating the variance of residual in pleiotropy test. Can be "robust", "variance", or "ordinal". Defaults is "variance" that estimates the variance of residual using median absolute deviation (MAD).
 #' @param FDR Logical. Whether to apply the FDR to convert the p-value to q-value. Defaults to TRUE.
 #' @param adjust.method Method for estimating q-value. Defaults to "Sidak".
-#' @param maxdiff The maximum difference between the MRBEE causal estimate and the initial estimator. Defaults to 1.5.
-#' @param phi The spectrum shrinkage parameter introduced by SRIVW. Default to 2.
 
 #' @return A list containing the estimated causal effect, its covariance, and pleiotropy
 #' @importFrom MASS rlm
@@ -24,7 +22,7 @@
 #' @importFrom abind abind
 #' @export
 #'
-MRBEE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-4,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",maxdiff=1.5,phi=2){
+MRBEE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-4,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak"){
 if(is.vector(bX)==T){
 A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB)
 A$gamma=A$delta
@@ -39,16 +37,11 @@ byse1=byse
 byse=byse/byse
 n=m=length(by)
 p=ncol(bX)
-G=diag(p)*0
 RxyList=array(0,c(m,p+1,p+1))
 for(i in 1:m){
 A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
-Asqrt=matrixsqrt(A[1:p,1:p])$wi
 RxyList[i,,]=A
-z=bX[i,]
-G=G+matrixListProduct(list(Asqrt,outer(z,z),Asqrt))-diag(p)
 }
-mu_min=max(0,min(eigen(G)$values))
 Rxyall=biasterm(RxyList=RxyList,c(1:n))
 ########## Initial Estimation ############
 fit=MASS::rlm(by~bX-1)
@@ -76,8 +69,6 @@ Rxysum=Rxyall
 Rxysum=Rxyall-biasterm(RxyList=RxyList,setdiff(1:n,indvalid))
 }
 Hinv=matrixMultiply(t(bX[indvalid,]),bX[indvalid,])-Rxysum[1:p,1:p]
-Hinv1=matrixInverse(Hinv)
-Hinv=Hinv+exp(phi-mu_min/sqrt(m))*Hinv1
 Hinv=matrixInverse(Hinv)
 g=matrixVectorMultiply(t(bX[indvalid,]),by[indvalid])-Rxysum[1+p,1:p]
 theta=matrixVectorMultiply(Hinv,g)
@@ -89,7 +80,7 @@ if(iter>5) error=sqrt(sum((theta-theta1)^2))
 adjf=n/(length(indvalid)-dim(bX)[2])
 D=matrixListProduct(list(bX[indvalid,],Hinv,t(bX[indvalid,])))
 D=(rep(1,length(indvalid))-diag(D))
-D[which(D<0.25)]=0.25
+D[which(D<0.5)]=0.5
 E=-bX[indvalid,]*(e[indvalid]/D)
 
 for(ii in 1:length(indvalid)){

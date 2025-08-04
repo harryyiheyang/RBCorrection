@@ -12,7 +12,6 @@
 #' @param max.iter Maximum number of iterations for updating the causal effect. Default is 30.
 #' @param max.eps Tolerance for stopping criteria. Default is 1e-4.
 #' @param pv.thres P-value threshold used in pleiotropy detection. Default is 0.05.
-#' @param phi Spectrum regularization parameter. Controls the shrinkage strength. Default is 2.
 #' @param var.est Method for estimating the variance of residuals. One of "robust", "variance", or "ordinal". Default is "variance".
 #' @param FDR Logical. Whether to convert p-values to q-values using FDR adjustment. Default is TRUE.
 #' @param adjust.method Method used to adjust p-values. Default is "Sidak".
@@ -26,7 +25,7 @@
 #' @export
 
 MRBEE_UV_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=30,max.eps=1e-04,
-                      pv.thres=0.05,phi=2,var.est="variance",FDR=T,adjust.method="Sidak"){
+                      pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak"){
 by=by/byse
 byseinv=1/byse
 bx=bx*byseinv
@@ -46,7 +45,6 @@ RxyList[i,,]=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
 }
 error=abs(theta-theta1)
 iter=0
-mu_min=max(0,sum(bx^2/RxyList[,1,1])-m)
 while (error>max.eps & iter<max.iter) {
 theta1=theta
 e=c(by-bx*theta)
@@ -60,7 +58,6 @@ indvalid.cut=which(pv>=stats::quantile(pv,0.5))
 indvalid=union(indvalid,indvalid.cut)
 }
 h=sum(bx[indvalid]^2)-sum(RxyList[indvalid,1,1])
-h=h+exp(phi-mu_min/sqrt(m))/h
 g=sum(bx[indvalid]*by[indvalid])-sum(RxyList[indvalid,1,2])
 theta=g/h
 iter=iter+1
@@ -76,7 +73,7 @@ vartheta=sum(E^2)/h^2*adjf
 
 A=list()
 A$theta=theta
-A$vartheta=vartheta
+A$theta.var=vartheta
 A$theta.se=sqrt(vartheta)
 r=c(by-bx*theta)*byse1
 r[indvalid]=0

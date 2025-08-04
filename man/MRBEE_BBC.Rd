@@ -17,9 +17,7 @@ MRBEE_BBC(
   pv.thres = 0.05,
   var.est = "variance",
   FDR = T,
-  adjust.method = "Sidak",
-  maxdiff = 1.5,
-  phi = 2
+  adjust.method = "Sidak"
 )
 }
 \arguments{
@@ -48,10 +46,6 @@ MRBEE_BBC(
 \item{FDR}{Logical. Whether to apply the FDR to convert the p-value to q-value. Defaults to TRUE.}
 
 \item{adjust.method}{Method for estimating q-value. Defaults to "Sidak".}
-
-\item{maxdiff}{The maximum difference between the MRBEE causal estimate and the initial estimator. Defaults to 1.5.}
-
-\item{phi}{The spectrum shrinkage parameter introduced by SRIVW. Default to 2.}
 }
 \value{
 A list containing the estimated causal effect, its covariance, and pleiotropy

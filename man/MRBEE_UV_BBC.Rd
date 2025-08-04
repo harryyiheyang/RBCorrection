@@ -15,7 +15,6 @@ MRBEE_UV_BBC(
   max.iter = 30,
   max.eps = 1e-04,
   pv.thres = 0.05,
-  phi = 2,
   var.est = "variance",
   FDR = T,
   adjust.method = "Sidak"
@@ -41,8 +40,6 @@ MRBEE_UV_BBC(
 \item{max.eps}{Tolerance for stopping criteria. Default is 1e-4.}
 
 \item{pv.thres}{P-value threshold used in pleiotropy detection. Default is 0.05.}
-
-\item{phi}{Spectrum regularization parameter. Controls the shrinkage strength. Default is 2.}
 
 \item{var.est}{Method for estimating the variance of residuals. One of "robust", "variance", or "ordinal". Default is "variance".}
 
