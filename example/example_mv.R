@@ -3,28 +3,31 @@ library(MASS)
 library(devtools)
 library(MRAPSS)
 library(dplyr)
+library(CppMatrix)
 document()
+options(bitmapType = "cairo")
 m=1000
-n=3e4
+n=2e4
 p=4
 Rbb=matrix(0.5,4,4)+diag(4)*0.5
-Rxy=matrix(0.9,5,5)+diag(5)*0.1
-Rxy=diag(5)
+Rxy=matrix(0.5,5,5)+diag(5)*0.5
+#Rxy=diag(5)
 Thetaxx=solve(Rxy[1:p,1:p])
-BETA=array(0,c(1000,4,3))
+BETA=array(0,c(300,4,3))
 theta0=c(0,0.2,0,0)
 iv.thes=5e-3
 h2=0.05
+eta=1
 i=1
 
-while(i<=1000){
+while(i<=300){
 indicator=F
 tryCatch({
 betaX=mvrnorm(n=m,mu=rep(0,p),Rbb)
 for(ii in 1:p){
 betax=betaX[,ii]
-#ind=sample(m,0.5*m)
-#betax[ind]=0
+ind=sample(m,0.5*m)
+betax[ind]=0
 betax=betax/sqrt(sum(betax^2))*sqrt(h2)
 betaX[,ii]=betax
 }
@@ -48,10 +51,18 @@ BETAMatrix=cbind(bX,by)
 SEMatrix=cbind(bXse,byse)
 rownames(BETAMatrix)=rownames(SEMatrix)=paste0("V",1:m)
 colnames(BETAMatrix)=colnames(SEMatrix)=c(paste0("Exposure",1:p),"Outcome")
-RB=RB_MV_Joint(BETAMatrix=BETAMatrix,SEMatrix=SEMatrix,
-                          Rxy=Rxy,P_threshold=iv.thes,eta=1,B=1000)
-print(c(length(indselect),dim(RB$BETA_RB)[1]))
-fit2=MRBEE_Winner(bX=RB$BETA_RB[,1:p],bXse=RB$SE_RB[,1:p],by=RB$BETA_RB[,p+1],byse=RB$SE_RB[,p+1],Rxy=Rxy,pv.thres=0.05,S_RB=RB$COV_RB,phi=1)
+###############################################################################
+for(ii in 1:m){
+z=bX[ii,]/bXse[ii,]+MASS::mvrnorm(n=1,mu=rep(0,p),Sigma=Rxy[1:p,1:p])*eta
+chisq=sum(z*(Thetaxx%*%z))
+pv[ii]=pchisq(chisq,p,lower.tail=F)
+}
+indselect=which(pv<iv.thes)
+RB=RaoBlackwellCorrect(BETA_Select=BETAMatrix[indselect,],SE_Select=SEMatrix[indselect,],Rxy=Rxy,pv.threshold=iv.thes,eta=eta,B=2000)
+fit2=MRBEE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,phi=5,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
+
+#bX=RB$bX_RB;bXse=RB$bXse_RB;by=RB$by_RB;byse=RB$byse_RB;pv.thres=0.05;cov_RB=RB$COV_RB;gcov=diag(p+1)*0;ldsc=rep(0,length(RB$by_RB))
+
 BETA[i,,]=cbind(fit0$theta,fit1$theta,fit2$theta)
 #print(i)
 if(i%%10==0){

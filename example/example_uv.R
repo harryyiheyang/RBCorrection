@@ -1,74 +1,73 @@
 covfreq=function(theta,theta.se,theta0){
-  g=ifelse(abs(theta/1.96-theta0/1.96)<=theta.se,1,0)
-  return(g)
+g=ifelse(abs(theta/1.96-theta0/1.96)<=theta.se,1,0)
+return(g)
 }
 
 rejfreq=function(theta,theta.se){
-  g=ifelse(abs(theta/1.96)<=theta.se,0,1)
-  return(g)
+g=ifelse(abs(theta/1.96)<=theta.se,0,1)
+return(g)
 }
 library(MRBEE)
 library(MASS)
 library(devtools)
 library(MRAPSS)
 library(dplyr)
-library(RBCorrection)
-m=100
-n=5e4
+document()
+m=1000
+n=3e4
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
 #Rxy=diag(2)
-BETA=SE=COV=REJ=matrix(0,100,5)
+BETA=SE=COV=REJ=matrix(0,300,5)
 theta0=0.2
 IV.theshold=0.05
 pleio.ratio=0
 eta=0.5
 
 i=1
-while(i<=100){
-  indicator=F
-  tryCatch({
-    betax=rnorm(n=m,mean=0,sd=1)
-    betax[sample(m,50)]=0
-    betax=betax/sqrt(sum(betax^2))*sqrt(0.05)
-    betay=betax*theta0
-    E=mvrnorm(n=m,mu=rep(0,2),Sigma=Rxy)
-    E=E%*%diag(sqrt(c(1/n,1/n)))
-    bx=betax+E[,1]
-    by=betay+E[,2]+ifelse(pleio.ratio>0,rbinom(m,1,pleio.ratio)*rnorm(m,0,sqrt(0.001/pleio.ratio)),0)
-    bxse=byse=rep(sqrt(1/n),m)
-    print((mean(bx^2)-bxse[1]^2)/mean(bx^2))
-    pv=pchisq((bx/bxse)^2,1,lower.tail=F)
-    indselect=which(pv<IV.theshold)
-    MRData=data.frame(SNP=paste0("V",1:m),A1=rep("T",m),A2=rep("G",m),b.exp=bx,b.out=by,se.exp=bxse,se.out=byse)%>%mutate(pval.exp=pchisq(b.exp^2/se.exp^2,1,lower.tail=F),pval.out=pchisq(b.out^2/se.out^2,1,lower.tail=F),L2=1,Threshold=IV.theshold)
-    fitAPSS=MRAPSS(MRData,exposure = "X",outcome = "Y",C = Rxy,Omega =  Rxy*0 ,Cor.SelectionBias = T,tol=1e-5)
+while(i<=300){
+indicator=F
+tryCatch({
+betax=rnorm(n=m,mean=0,sd=1)
+betax[sample(m,50)]=0
+betax=betax/sqrt(sum(betax^2))*sqrt(0.05)
+betay=betax*theta0
+E=mvrnorm(n=m,mu=rep(0,2),Sigma=Rxy)
+E=E%*%diag(sqrt(c(1/n,1/n)))
+bx=betax+E[,1]
+by=betay+E[,2]+ifelse(pleio.ratio>0,rbinom(m,1,pleio.ratio)*rnorm(m,0,sqrt(0.001/pleio.ratio)),0)
+bxse=byse=rep(sqrt(1/n),m)
+print((mean(bx^2)-bxse[1]^2)/mean(bx^2))
+pv=pchisq((bx/bxse)^2,1,lower.tail=F)
+indselect=which(pv<IV.theshold)
+#MRData=data.frame(SNP=paste0("V",1:m),A1=rep("T",m),A2=rep("G",m),b.exp=bx,b.out=by,se.exp=bxse,se.out=byse)%>%mutate(pval.exp=pchisq(b.exp^2/se.exp^2,1,lower.tail=F),pval.out=pchisq(b.out^2/se.out^2,1,lower.tail=F),L2=1,Threshold=IV.theshold)
+#fitAPSS=MRAPSS(MRData,exposure = "X",outcome = "Y",C = Rxy,Omega =  Rxy*0 ,Cor.SelectionBias = T,tol=1e-5)
 
-    fit0=MRBEE.IMRP.UV(by=by,bx=bx,byse=byse,bxse=bxse,Rxy=Rxy,pv.thres=0.05)
-    fit1=MRBEE.IMRP.UV(by=by[indselect],bx=bx[indselect],byse=byse[indselect],bxse=bxse[indselect],Rxy=Rxy,pv.thres=0.05)
+fit0=MRBEE.IMRP.UV(by=by,bx=bx,byse=byse,bxse=bxse,Rxy=Rxy,pv.thres=0.05)
+fit1=MRBEE.IMRP.UV(by=by[indselect],bx=bx[indselect],byse=byse[indselect],bxse=bxse[indselect],Rxy=Rxy,pv.thres=0.05)
 
-    RB=RB_UV_Analytic(gamma=bx,sigma=bxse,cutoff=sqrt(qchisq(IV.theshold,1,lower.tail=F)),eta=1)
-    fit2=MRBEE.IMRP.UV(by=by[RB$IVselect],byse=byse[RB$IVselect],bx=RB$BETA_RB,bxse=RB$SE_RB,Rxy=Rxy,pv.thres=0.05)
+RB=RB_UV_Analytic(gamma=bx,sigma=bxse,cutoff=sqrt(qchisq(IV.theshold,1,lower.tail=F)),eta=1)
+fit2=MRBEE.IMRP.UV(by=by[RB$IVselect],byse=byse[RB$IVselect],bx=RB$BETA_RB,bxse=RB$SE_RB,Rxy=Rxy,pv.thres=0.05)
 
-    pv=pchisq((bx/bxse)^2+rnorm(m,0,eta)^2,1,lower.tail=F)
-    indselect=which(pv<IV.theshold)
-    RB=RaoBlackwellCorrect(BETA_Select=cbind(bx[indselect],by[indselect]),SE_Select=cbind(bxse[indselect],byse[indselect]),Rxy=Rxy,eta=eta,pv.threshold=IV.theshold,B=1000)
-    fit3=MRBEE_UV_Winner(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,Rxy=Rxy,pv.thres=0.05,cov_RB=RB$COV_RB,phi=0,gcov=diag(2)*0,ldsc=c(1:m)*0)
+pv=pchisq((bx/bxse)^2+rnorm(m,0,eta)^2,1,lower.tail=F)
+indselect=which(pv<IV.theshold)
+RB=RaoBlackwellCorrect(BETA_Select=cbind(bx[indselect],by[indselect]),SE_Select=cbind(bxse[indselect],byse[indselect]),Rxy=Rxy,eta=eta,pv.threshold=IV.theshold,B=1000)
+fit3=MRBEE_UV_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(2)*0,ldsc=c(1:m)*0)
+BETA[i,]=c(fitAPSS$beta,fit0$theta,fit1$theta,fit2$theta,fit3$theta)
+SE[i,]=sqrt(c(fitAPSS$beta.se^2,fit0$vartheta,fit1$vartheta,fit2$vartheta,fit3$vartheta))
+COV[i,]=covfreq(BETA[i,],SE[i,],theta0)
+REJ[i,]=rejfreq(BETA[i,],SE[i,])
 
-    BETA[i,]=c(fitAPSS$beta,fit0$theta,fit1$theta,fit2$theta,fit3$theta)
-    SE[i,]=sqrt(c(fitAPSS$beta.se^2,fit0$vartheta,fit1$vartheta,fit2$vartheta,fit3$vartheta))
-    COV[i,]=covfreq(BETA[i,],SE[i,],theta0)
-    REJ[i,]=rejfreq(BETA[i,],SE[i,])
-
-    i=i+1
-    print(i)
-  }, error = function(e) {
-    # Error handling block
-    cat("Error occurred: ", e$message, " at ",i,"th iteration\n")
-    indicator <<- TRUE  # Set indicator to TRUE if an error occurs
-    i <<- i  # Decrement the iteration counter to retry
-  })
-  if (indicator) {
-    next  # Retry the current iteration
-  }
+i=i+1
+print(i)
+}, error = function(e) {
+# Error handling block
+cat("Error occurred: ", e$message, " at ",i,"th iteration\n")
+indicator <<- TRUE  # Set indicator to TRUE if an error occurs
+i <<- i  # Decrement the iteration counter to retry
+})
+if (indicator) {
+next  # Retry the current iteration
+}
 }
 boxplot(BETA)
 lines(c(0:10),rep(0.2,11))

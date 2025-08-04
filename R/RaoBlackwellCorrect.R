@@ -20,6 +20,7 @@
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.threshold,
                                 B = 1000, onlyexposure=T) {
+cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
 stopifnot(all(dim(BETA_Select) == dim(SE_Select)))
 stopifnot(ncol(BETA_Select) == nrow(Rxy))
 stopifnot(nrow(Rxy) == ncol(Rxy))
@@ -45,9 +46,22 @@ res <- .Call(`_RBCorrection_RaoBlackwell`, beta_select=BETA_Select, se_select=SE
              Rxy=Rxy, Rxysqrt=Rxysqrt, eta=eta,cutoff=cutoff, B=B, onlyexposure=onlyexposure,n_threads=floor(parallel::detectCores() / 2))
 res$SE_RB[res$CORRECTED_INDICES,]=sqrt(SE_Select[res$CORRECTED_INDICES,]^2*(1+1/eta^2))
 
-rownames(res$BETA_RB) <- rownames(BETA_Select)
+for(i in 1:length(res$COV_RB)){
+s=res$SE_RB[i,]
+res$COV_RB[[i]]=t(t(Rxy)*s)*s-res$COV_RB[[i]]
+s=sqrt(diag(res$COV_RB[[i]]))
+s[is.na(s)]=0
+res$SE_RB[i,]=s
+}
+
+ind = !is.na(res$SE_RB[,p+1]) & res$SE_RB[,p+1] > 0
+res$BETA_RB=res$BETA_RB[ind,]
+res$SE_RB=res$SE_RB[ind,]
+res$COV_RB=res$COV_RB[ind]
+
+rownames(res$BETA_RB) <- rownames(BETA_Select[ind,])
 colnames(res$BETA_RB) <- colnames(BETA_Select)
-rownames(res$SE_RB) <- rownames(BETA_Select)
+rownames(res$SE_RB) <- rownames(BETA_Select[ind,])
 colnames(res$SE_RB) <- colnames(BETA_Select)
 
 bX_RB=res$BETA_RB[,1:p]

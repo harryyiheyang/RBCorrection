@@ -1,15 +1,14 @@
-#' Univariable MRBEE with Spectrum Regularization
+#' Univariable MRBEE with background bias correction (BBC)
 #'
-#' This function estimates the univariable causal effect using bias-corrected estimating equations with optional spectrum regularization to improve numerical stability under weak instruments.
+#' This function estimates the univariable causal effect using bias-corrected estimating equations with background bias correction (BBC) to improve numerical stability under weak instruments.
 #'
-#' @param by A numeric vector (m × 1) of GWAS effect sizes for the outcome.
-#' @param bx A numeric vector (m × 1) of GWAS effect sizes for the exposure.
-#' @param byse A numeric vector (m × 1) of standard errors for `by`.
-#' @param bxse A numeric vector (m × 1) of standard errors for `bx`.
-#' @param Rxy A 2 × 2 correlation matrix of the exposure and outcome GWAS estimates.
+#' @param by A numeric vector (m × 1) of GWAS effect sizes for the outcome yielded by Rao-Blackwell Correction.
+#' @param bx A numeric vector (m × 1) of GWAS effect sizes for the exposure yielded by Rao-Blackwell Correction.
+#' @param byse A numeric vector (m × 1) of standard errors for `by` yielded by Rao-Blackwell Correction.
+#' @param bxse A numeric vector (m × 1) of standard errors for `bx` yielded by Rao-Blackwell Correction.
+#' @param cov_RB A list of m matrices of Rao-Blackwell correction terms, each of dimension 2 × 2.
 #' @param gcov A matrix (2 x 2) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.
 #' @param ldsc A vector (n x 1) of the LDSCs of the IVs.
-#' @param cov_RB A list of m matrices of Rao-Blackwell correction terms, each of dimension 2 × 2.
 #' @param max.iter Maximum number of iterations for updating the causal effect. Default is 30.
 #' @param max.eps Tolerance for stopping criteria. Default is 1e-4.
 #' @param pv.thres P-value threshold used in pleiotropy detection. Default is 0.05.
@@ -26,46 +25,43 @@
 #' @importFrom abind abind
 #' @export
 
-MRBEE_UV_Winner=function (by,bx,byse,bxse,Rxy,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-04,
-                    pv.thres=0.05,phi=2,var.est="variance",FDR=T,
-                    adjust.method="Sidak"){
+MRBEE_UV_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=30,max.eps=1e-04,
+                      pv.thres=0.05,phi=2,var.est="variance",FDR=T,adjust.method="Sidak"){
 by=by/byse
 byseinv=1/byse
 bx=bx*byseinv
 bxse=bxse*byseinv
 byse1=byse
 byse=byse/byse
-n=length(by)
-RxyList=IVweight(byse,bxse,Rxy)
+n=m=length(by)
 fit=MASS::rlm(by~bx-1)
 theta=fit$coefficient
 theta1=10000
 e=c(by-bx*theta)
 indvalid=which(abs(e)<=3*stats::mad(e))
 indvalid=validadj(abs(e),indvalid,0.5)
+RxyList=array(0,c(n,2,2))
+for(i in 1:m){
+RxyList[i,,]=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
+}
 error=abs(theta-theta1)
 iter=0
-m=length(by)
-mu_min=max(0,sum((bx/bxse)^2)/Rxy[1,1]-m)
-cov_RBArray=abind::abind(cov_RB,  along = 3)
+mu_min=max(0,sum(bx^2/RxyList[,1,1])-m)
 while (error>max.eps & iter<max.iter) {
 theta1=theta
 e=c(by-bx*theta)
 pv=imrpdetect(x=e,theta=theta,RxyList=RxyList,
-            var.est=var.est,FDR=FDR,adjust.method=adjust.method,
-            indvalid=indvalid)
+              var.est=var.est,FDR=FDR,adjust.method=adjust.method,
+              indvalid=indvalid)
 pv[is.na(pv)]=1
 indvalid=which(pv>=pv.thres)
 if (length(indvalid)<=length(pv)*0.5) {
 indvalid.cut=which(pv>=stats::quantile(pv,0.5))
 indvalid=union(indvalid,indvalid.cut)
 }
-cov_RB_Sum <- Reduce(`+`, lapply(seq_along(indvalid), function(i) {
-  cov_RBArray[,,indvalid[i]] * byseinv[indvalid[i]]^2
-}))
-h=sum(bx[indvalid]^2)-sum(bxse[indvalid]^2*Rxy[1,1])+cov_RB_Sum[1,1]-gcov[1,1]*sum(byseinv[indvalid]^2*ldsc[indvalid])
+h=sum(bx[indvalid]^2)-sum(RxyList[indvalid,1,1])
 h=h+exp(phi-mu_min/sqrt(m))/h
-g=sum(bx[indvalid]*by[indvalid])-Rxy[1,2]*sum(bxse[indvalid] *byse[indvalid])+cov_RB_Sum[1,2]-gcov[1,2]*sum(byseinv[indvalid]^2*ldsc[indvalid])
+g=sum(bx[indvalid]*by[indvalid])-sum(RxyList[indvalid,1,2])
 theta=g/h
 iter=iter+1
 if (iter>5) error=abs(theta-theta1)
@@ -75,12 +71,13 @@ Hat=outer(bx[indvalid],bx[indvalid])/h
 Hat=1-diag(Hat)
 Hat[Hat<0.5]=0.5
 e[indvalid]=e[indvalid]/Hat
-E = -bx[indvalid]*e[indvalid] + bxse[indvalid]*byse[indvalid]*Rxy[1,2] - bxse[indvalid]^2 * theta*Rxy[1,1] + cov_RBArray[1, 1, indvalid] * theta * byseinv[indvalid]^2 -cov_RBArray[1, 2, indvalid] * byseinv[indvalid]^2+gcov[1,2]*sum(byseinv[indvalid]^2*ldsc[indvalid])-gcov[1,1]*sum(byseinv[indvalid]^2*ldsc[indvalid])*theta
+E = -bx[indvalid]*e[indvalid] + RxyList[indvalid,1,2] - RxyList[indvalid,1,1]*theta
 vartheta=sum(E^2)/h^2*adjf
 
 A=list()
 A$theta=theta
 A$vartheta=vartheta
+A$theta.se=sqrt(vartheta)
 r=c(by-bx*theta)*byse1
 r[indvalid]=0
 names(r)=rownames(bx)
