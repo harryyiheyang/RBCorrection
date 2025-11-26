@@ -10,6 +10,7 @@
 #' @param pv.threshold P-value threshold used for selection.
 #' @param B Number of samples used in rejection sampling (default = 1000).
 #' @param onlyexposure A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.
+#' @param kappa_thres Numeric threshold controlling the removal of SNPs with unstable RBC covariance; if the condition number of the corrected covariance exceeds kappa_thres * kappa(Rxy) the SNP is discarded. Defaults to \code{2}.
 #' @param warnings A indicator of whether printing warnings. Defaults to \codet{TRUE}.
 #'
 #' @return A list containing:
@@ -20,7 +21,7 @@
 #'
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.threshold,
-                                B = 1000, onlyexposure=T,warnings=T) {
+                                B = 1000, kappa_thres=3, onlyexposure=T,warnings=T) {
 if(warnings){
 cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
 }
@@ -46,7 +47,7 @@ rownames(SE_Select) <- rownames(BETA_Select)
 colnames(SE_Select) <- colnames(BETA_Select)
 
 res <- .Call(`_RBCorrection_RaoBlackwell`, beta_select=BETA_Select, se_select=SE_Select,
-             Rxy=Rxy, Rxysqrt=Rxysqrt, eta=eta,cutoff=cutoff, B=B, onlyexposure=onlyexposure,n_threads=floor(parallel::detectCores() / 2))
+         Rxy=Rxy, Rxysqrt=Rxysqrt, eta=eta,cutoff=cutoff, B=B, onlyexposure=onlyexposure,n_threads=floor(parallel::detectCores() / 2))
 res$SE_RB[res$CORRECTED_INDICES,]=sqrt(SE_Select[res$CORRECTED_INDICES,]^2*(1+1/eta^2))
 
 for(i in 1:length(res$COV_RB)){
@@ -57,7 +58,26 @@ s[is.na(s)]=0
 res$SE_RB[i,]=s
 }
 
-ind = !is.na(res$SE_RB[,p+1]) & res$SE_RB[,p+1] > 0
+condition_check = function(res, thres = 3) {
+ind1 = which(!is.na(res$SE_RB[, p+1]) & res$SE_RB[, p+1] > 0)
+ind2 = integer(0)
+for (i in seq_along(res$COV_RB)) {
+sevec   = SE_Select[i, ]
+kapparxy = kappa(t(t(Rxy) * sevec) * sevec)
+S        = res$COV_RB[[i]]
+i1       = (diag(S) <= 0)
+i2_flag  = kappa(S) > (thres * kapparxy)
+
+if (sum(i1) + sum(i2_flag) == 0) {
+ind2 = c(ind2, i)
+}
+}
+ind = intersect(ind1, ind2)
+return(ind)
+}
+
+
+ind=condition_check(res,thres=kappa_thres)
 res$BETA_RB=res$BETA_RB[ind,]
 res$SE_RB=res$SE_RB[ind,]
 res$COV_RB=res$COV_RB[ind]

@@ -13,13 +13,14 @@ GRAPPLE_BBC(
   ldsc,
   cov_RB,
   max.iter = 30,
-  max.eps = 1e-04,
-  lambda = 2,
+  max.eps = 1e-05,
+  lambda = 3,
   a = 3,
   tau_upper = 10,
   sampling.time = 300,
   n_threads = 4,
-  max.prop.pleio = 0.5
+  max.prop.pleio = 0.5,
+  sampling.strategy = "subsampling"
 )
 }
 \arguments{
@@ -69,6 +70,8 @@ covariance (or variance) of the causal effect estimates. Defaults to 300.}
 \item{n_threads}{The number of threads. Defaults to 4.}
 
 \item{max.prop.pleio}{A numeric value in (0, 1). The maximum allowed proportion  of non-zero pleiotropic terms. Default is 0.5.}
+
+\item{sampling.strategy}{"bootstrap" or "subsampling" (0.5 sample without replacement).}
 }
 \value{
 A list containing:
@@ -91,7 +94,7 @@ variance, standard error, pleiotropy term, and bootstrap replicates).
 }
 \description{
 This function estimates causal effects using a robust GRAPPLE-type
-estimating equation combined with background bias correction (BBC).
+likelihood method combined with background bias correction (BBC).
 It uses an MCP-based loss to downweight outlying instruments and
 accounts for sample overlap through LDSC and Rao-Blackwell corrections.
 }

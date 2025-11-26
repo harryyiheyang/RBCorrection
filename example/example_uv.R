@@ -17,7 +17,7 @@ m=1000
 n=3e4
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
 #Rxy=diag(2)
-BETA=SE=COV=REJ=matrix(0,300,6)
+BETA=SE=COV=REJ=matrix(0,300,7)
 theta0=0.2
 IV.theshold=0.05
 pleio.ratio=0
@@ -34,7 +34,7 @@ betay=betax*theta0
 E=mvrnorm(n=m,mu=rep(0,2),Sigma=Rxy)
 E=E%*%diag(sqrt(c(1/n,1/n)))
 bx=betax+E[,1]
-by=betay+E[,2]+ifelse(pleio.ratio>0,rbinom(m,1,pleio.ratio)*rnorm(m,0,sqrt(0.001/pleio.ratio)),0)
+by=betay+E[,2]+ifelse(pleio.ratio>0,rbinom(m,1,pleio.ratio)*rnorm(m,0,sqrt(0.001/pleio.ratio)),0)+rnorm(m,0,0.3/sqrt(n))
 bxse=byse=rep(sqrt(1/n),m)
 print((mean(bx^2)-bxse[1]^2)/mean(bx^2))
 pv=pchisq((bx/bxse)^2,1,lower.tail=F)
@@ -53,9 +53,10 @@ indselect=which(pv<IV.theshold)
 RB=RaoBlackwellCorrect(BETA_Select=cbind(bx[indselect],by[indselect]),SE_Select=cbind(bxse[indselect],byse[indselect]),Rxy=Rxy,eta=eta,pv.threshold=IV.theshold,B=1000,warnings=F)
 fit3=MRBEE_UV_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(2)*0,ldsc=c(1:m)*0)
 fit4=MRRAPS_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(2)*0,ldsc=c(1:m)*0)
+fit5=MRcML_UV_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(2)*0,ldsc=c(1:m)*0)
 
-BETA[i,]=c(fitAPSS$beta,fit0$theta,fit1$theta,fit2$theta,fit3$theta,fit4$theta)
-SE[i,]=sqrt(c(fitAPSS$beta.se^2,fit0$vartheta,fit1$vartheta,fit2$vartheta,fit3$theta.var,fit4$theta.var))
+BETA[i,]=c(fitAPSS$beta,fit0$theta,fit1$theta,fit2$theta,fit3$theta,fit4$theta,fit5$theta)
+SE[i,]=sqrt(c(fitAPSS$beta.se^2,fit0$vartheta,fit1$vartheta,fit2$vartheta,fit3$theta.var,fit4$theta.var,fit5$theta.var))
 COV[i,]=covfreq(BETA[i,],SE[i,],theta0)
 REJ[i,]=rejfreq(BETA[i,],SE[i,])
 i=i+1

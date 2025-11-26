@@ -31,36 +31,70 @@ BEGIN_RCPP
 END_RCPP
 }
 // grapple_stat_multi_cpp
-Rcpp::List grapple_stat_multi_cpp(const arma::cube& RxyList, const arma::vec& theta, int n_threads);
-RcppExport SEXP _RBCorrection_grapple_stat_multi_cpp(SEXP RxyListSEXP, SEXP thetaSEXP, SEXP n_threadsSEXP) {
+Rcpp::List grapple_stat_multi_cpp(const arma::cube& RxyList, const arma::vec& theta, const arma::vec& e, int n_threads);
+RcppExport SEXP _RBCorrection_grapple_stat_multi_cpp(SEXP RxyListSEXP, SEXP thetaSEXP, SEXP eSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::cube& >::type RxyList(RxyListSEXP);
     Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type e(eSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(grapple_stat_multi_cpp(RxyList, theta, n_threads));
+    rcpp_result_gen = Rcpp::wrap(grapple_stat_multi_cpp(RxyList, theta, e, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 // grapple_stat_uni_cpp
-Rcpp::List grapple_stat_uni_cpp(const arma::cube& RxyList, double theta, int n_threads);
-RcppExport SEXP _RBCorrection_grapple_stat_uni_cpp(SEXP RxyListSEXP, SEXP thetaSEXP, SEXP n_threadsSEXP) {
+Rcpp::List grapple_stat_uni_cpp(const arma::cube& RxyList, double theta, const arma::vec& e, int n_threads);
+RcppExport SEXP _RBCorrection_grapple_stat_uni_cpp(SEXP RxyListSEXP, SEXP thetaSEXP, SEXP eSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::cube& >::type RxyList(RxyListSEXP);
     Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type e(eSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(grapple_stat_uni_cpp(RxyList, theta, n_threads));
+    rcpp_result_gen = Rcpp::wrap(grapple_stat_uni_cpp(RxyList, theta, e, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// MRcML_bXest
+arma::mat MRcML_bXest(const arma::cube& ThetaList, const arma::mat& bX, const arma::vec& e, const arma::vec& theta, int n_threads);
+RcppExport SEXP _RBCorrection_MRcML_bXest(SEXP ThetaListSEXP, SEXP bXSEXP, SEXP eSEXP, SEXP thetaSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::cube& >::type ThetaList(ThetaListSEXP);
+    Rcpp::traits::input_parameter< const arma::mat& >::type bX(bXSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type e(eSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(MRcML_bXest(ThetaList, bX, e, theta, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// MRcML_UV_bxest
+arma::vec MRcML_UV_bxest(const arma::cube& ThetaList, const arma::vec& bx, const arma::vec& e, double theta, int n_threads);
+RcppExport SEXP _RBCorrection_MRcML_UV_bxest(SEXP ThetaListSEXP, SEXP bxSEXP, SEXP eSEXP, SEXP thetaSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::cube& >::type ThetaList(ThetaListSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type bx(bxSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type e(eSEXP);
+    Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(MRcML_UV_bxest(ThetaList, bx, e, theta, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RBCorrection_RaoBlackwell", (DL_FUNC) &_RBCorrection_RaoBlackwell, 9},
-    {"_RBCorrection_grapple_stat_multi_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_multi_cpp, 3},
-    {"_RBCorrection_grapple_stat_uni_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_uni_cpp, 3},
+    {"_RBCorrection_grapple_stat_multi_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_multi_cpp, 4},
+    {"_RBCorrection_grapple_stat_uni_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_uni_cpp, 4},
+    {"_RBCorrection_MRcML_bXest", (DL_FUNC) &_RBCorrection_MRcML_bXest, 5},
+    {"_RBCorrection_MRcML_UV_bxest", (DL_FUNC) &_RBCorrection_MRcML_UV_bxest, 5},
     {NULL, NULL, 0}
 };
 

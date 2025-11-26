@@ -7,13 +7,13 @@ library(CppMatrix)
 document()
 options(bitmapType = "cairo")
 m=1000
-n=1e5
+n=5e4
 p=4
 Rbb=matrix(0.5,4,4)+diag(4)*0.5
 Rxy=matrix(0.5,5,5)+diag(5)*0.5
 #Rxy=diag(5)
 Thetaxx=solve(Rxy[1:p,1:p])
-BETA=array(0,c(300,4,3))
+BETA=array(0,c(300,4,5))
 theta0=c(0,0.2,0,0)
 iv.thes=5e-3
 h2=0.05
@@ -61,21 +61,22 @@ indselect=which(pv<iv.thes)
 RB=RaoBlackwellCorrect(BETA_Select=BETAMatrix[indselect,],SE_Select=SEMatrix[indselect,],Rxy=Rxy,pv.threshold=iv.thes,eta=eta,B=5000)
 fit2=MRBEE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
 fit3=GRAPPLE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
+fit4=MRcML_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
 
-bX=RB$bX_RB;bXse=RB$bXse_RB;by=RB$by_RB;byse=RB$byse_RB;pv.thres=0.05;cov_RB=RB$COV_RB;gcov=diag(p+1)*0;ldsc=rep(0,length(RB$by_RB));max.iter=10;max.eps=1e-4;lambda=2;a=3;tau_upper=10;sampling.time=300;n_threads=4
+#bX=RB$bX_RB;bXse=RB$bXse_RB;by=RB$by_RB;byse=RB$byse_RB;pv.thres=0.05;cov_RB=RB$COV_RB;gcov=diag(p+1)*0;ldsc=rep(0,length(RB$by_RB));max.iter=10;max.eps=1e-4;lambda=2;a=3;tau_upper=10;sampling.time=300;n_threads=4
 
-BETA[i,,]=cbind(fit0$theta,fit1$theta,fit2$theta)
+BETA[i,,]=cbind(fit0$theta,fit1$theta,fit2$theta,fit3$theta,fit4$theta)
 #print(i)
 if(i%%10==0){
 par(mfrow=c(2,2))
 boxplot(BETA[1:i,1,])
-lines(c(0:4),rep(theta0[1],5))
+lines(c(0:5),rep(theta0[1],6))
 boxplot(BETA[1:i,2,])
-lines(c(0:4),rep(theta0[2],5))
+lines(c(0:5),rep(theta0[2],6))
 boxplot(BETA[1:i,3,])
-lines(c(0:4),rep(theta0[3],5))
+lines(c(0:5),rep(theta0[3],6))
 boxplot(BETA[1:i,4,])
-lines(c(0:4),rep(theta0[4],5))
+lines(c(0:5),rep(theta0[4],6))
 }
 i=i+1
 }, error = function(e) {

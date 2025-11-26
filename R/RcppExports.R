@@ -6,32 +6,39 @@ RaoBlackwell <- function(beta_select, se_select, Rxy, Rxysqrt, eta, cutoff, B, o
 }
 
 #' GRAPPLE stat (multivariable) in C++ with OpenMP
-#'
-#' @param RxyList A (p+1) x (p+1) x m cube, the k-th slice is the
-#'   (p+1) x (p+1) matrix for SNP k.
-#' @param theta A length-p vector of current causal effect estimates.
-#' @param n_threads Number of OpenMP threads.
-#'
-#' @return List with var_vec (length m), var_cor (m x p),
-#'   bias_correction (p x p).
-#'
-#' @export
-grapple_stat_multi_cpp <- function(RxyList, theta, n_threads = 1L) {
-    .Call(`_RBCorrection_grapple_stat_multi_cpp`, RxyList, theta, n_threads)
+NULL
+
+grapple_stat_multi_cpp <- function(RxyList, theta, e, n_threads = 1L) {
+    .Call(`_RBCorrection_grapple_stat_multi_cpp`, RxyList, theta, e, n_threads)
 }
 
-#' GRAPPLE stat (univariable) in C++ with OpenMP
+grapple_stat_uni_cpp <- function(RxyList, theta, e, n_threads = 1L) {
+    .Call(`_RBCorrection_grapple_stat_uni_cpp`, RxyList, theta, e, n_threads)
+}
+
+#' MRcML_bXest in C++ with OpenMP (multivariable)
 #'
-#' @param RxyList A 2 x 2 x m cube. The k-th slice is the 2 x 2
-#'   matrix for SNP k.
-#' @param theta Scalar causal effect estimate.
-#' @param n_threads Number of OpenMP threads.
+#' @param ThetaList (p+1) x (p+1) x m array, as arma::cube
+#' @param bX m x p matrix of original exposure effects
+#' @param e length-m vector of residuals
+#' @param theta length-p vector of causal effects
+#' @param n_threads number of OpenMP threads
+#' @return m x p matrix of bXest
 #'
-#' @return List with var_vec (length m), var_cor (length m),
-#'   bias_correction (scalar).
+MRcML_bXest <- function(ThetaList, bX, e, theta, n_threads = 1L) {
+    .Call(`_RBCorrection_MRcML_bXest`, ThetaList, bX, e, theta, n_threads)
+}
+
+#' MRcML_UV_bxest in C++ with OpenMP (univariable)
 #'
-#' @export
-grapple_stat_uni_cpp <- function(RxyList, theta, n_threads = 1L) {
-    .Call(`_RBCorrection_grapple_stat_uni_cpp`, RxyList, theta, n_threads)
+#' @param ThetaList 2 x 2 x m array, as arma::cube
+#' @param bx length-m vector of exposure effects
+#' @param e  length-m vector of residuals
+#' @param theta scalar causal effect
+#' @param n_threads number of OpenMP threads
+#' @return length-m vector of bxest
+#'
+MRcML_UV_bxest <- function(ThetaList, bx, e, theta, n_threads = 1L) {
+    .Call(`_RBCorrection_MRcML_UV_bxest`, ThetaList, bx, e, theta, n_threads)
 }
 

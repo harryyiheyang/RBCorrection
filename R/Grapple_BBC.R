@@ -1,7 +1,7 @@
 #' GRAPPLE with background bias correction (BBC).
 #'
 #' This function estimates causal effects using a robust GRAPPLE-type
-#' estimating equation combined with background bias correction (BBC).
+#' likelihood method combined with background bias correction (BBC).
 #' It uses an MCP-based loss to downweight outlying instruments and
 #' accounts for sample overlap through LDSC and Rao-Blackwell corrections.
 #'
@@ -37,7 +37,8 @@
 #'   covariance (or variance) of the causal effect estimates. Defaults to 300.
 #' @param n_threads The number of threads. Defaults to 4.
 #' @param max.prop.pleio A numeric value in (0, 1). The maximum allowed proportion  of non-zero pleiotropic terms. Default is 0.5.
-#'
+#' @param sampling.strategy "bootstrap" or "subsampling" (0.5 sample without replacement).
+
 #' @return A list containing:
 #' \describe{
 #'   \item{theta}{A vector (length p) of the estimated causal effects of
@@ -60,11 +61,12 @@
 #' @import CppMatrix
 #' @export
 
-GRAPPLE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-4,lambda=2,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5){
+GRAPPLE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
-A=MRRAPS_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,tau_upper=tau_upper,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio)
+A=MRRAPS_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,tau_upper=tau_upper,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
 }else{
 ######### Basic Processing  ##############
+fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,gcov=gcov,ldsc=ldsc,max.iter=max.iter,max.eps=max.eps)
 by=by/byse
 byseinv=1/byse
 bX=bX*byseinv
@@ -80,15 +82,14 @@ A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
 RxyList[,,i]=A
 }
 ########## Initial Estimation ############
-fit=MASS::rlm(by~bX-1)
-theta.ini=fit$coefficient
+theta.ini=fit.ini$theta
 theta=theta.ini
 theta1=10000
 e=c(by-matrixVectorMultiply(bX,theta))
-indvalid=which(abs(e)<=3*stats::mad(e))
-indvalid=validadj(abs(e),indvalid,0.5)
-gamma.ini=e
+indvalid=which(fit.ini$gamma==0)
+gamma.ini=soft(e,1)
 gamma.ini[indvalid]=0
+gamma=gamma.ini
 tau=0.1
 ########## Iteration ###################
 error=sqrt(sum((theta-theta1)^2))
@@ -96,7 +97,7 @@ iter=0
 while(error>max.eps&iter<max.iter){
 theta1=theta
 e=c(by-matrixVectorMultiply(bX,theta))
-gra_stat=grapple_stat(RxyList=RxyList,theta=theta,n_threads=n_threads)
+gra_stat=grapple_stat(RxyList=RxyList,theta=theta,e=e-gamma,n_threads=n_threads)
 var_vec=as.vector(gra_stat$var_vec)+tau
 var_vecinv=1/var_vec
 var_cor=gra_stat$var_cor
@@ -104,26 +105,33 @@ bias_correction=gra_stat$bias_correction
 gamma=mcp(e,lam=lambda*pmax(1,sqrt(var_vec)),a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 g_theta=-matrixVectorMultiply(t(bX),(e-gamma)*var_vec)-matrixVectorMultiply(t(var_cor),(e-gamma)^2*var_vecinv^2)
-Hinv=matrixMultiply(t(bX),bX*(var_vecinv))-bias_correction+4*matrixMultiply(t(var_cor),var_cor*(var_vecinv^2))
-Hinv=matrixInverse(Hinv)
+Hinv=matrixMultiply(t(bX),bX*(var_vecinv))-bias_correction+8*matrixMultiply(t(var_cor),var_cor*(var_vecinv^2))
+Hinv=max(0.2,1.1-iter/10)*matrixInverse(Hinv)
 theta=theta-as.vector(Hinv%*%g_theta)
 tau_eq <- function(tau) {
-  z  <- (e-gamma) / sqrt(gra_stat$var_vec + tau)
-  sum(rho_mcp(z, lambda = lambda, gamma = a)) - m * eta
+z <- (e - gamma) / sqrt(gra_stat$var_vec + tau)
+sum(rho_mcp(z, lambda = lambda, gamma = a)) - m * eta
 }
 tau <- solve_tau(tau_eq, tau_upper)
 iter=iter+1
-if(iter>5) error=sqrt(sum((theta-theta1)^2))
+if(iter>10) error=sqrt(sum((theta-theta1)^2))
 }
 
 ################# Inference ##############
 ThetaMatrix=matrix(0,sampling.time,p)
 for(i in 1:sampling.time){
+if(sampling.strategy=="bootstrap"){
 ind=sample(1:m,m,replace=T)
+mi=m
+}else{
+ind=sample(1:m,m*0.5,replace=F)
+mi=0.5*m
+}
 thetai=theta*runif(p,0.95,1.05)
 theta1i=10000
 bXi=bX[ind,]
 byi=by[ind]
+gammai=gamma[ind]
 RxyListi <- RxyList[,,ind]
 taui=tau
 errori=sqrt(sum((thetai-theta1i)^2))
@@ -131,23 +139,24 @@ iteri=0
 while(errori>max.eps&iteri<max.iter){
 theta1i=thetai
 ei=c(byi-matrixVectorMultiply(bXi,thetai))
-gra_stati=grapple_stat(RxyList=RxyListi,theta=thetai,n_threads = n_threads)
+gra_stati=grapple_stat(RxyList=RxyListi,theta=thetai,e=ei-gammai,n_threads = n_threads)
 var_veci=gra_stati$var_vec+taui
 var_cori=gra_stati$var_cor
+var_vecinvi=1/var_veci
 bias_correctioni=gra_stati$bias_correction
-gammai=mcp(ei,lam=lambda*sqrt(var_veci),a=a)
+gammai=mcp(ei,lam=pmax(1,lambda*sqrt(var_veci)),a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
-g_thetai=-matrixVectorMultiply(t(bXi),(ei-gammai)/var_veci)-matrixVectorMultiply(t(var_cori),(ei-gammai)^2/var_veci^2)
-Hinvi=matrixMultiply(t(bXi),bXi*(1/var_veci))-bias_correctioni+4*matrixMultiply(t(var_cori),var_cori*(1/var_veci^2))
-Hinvi=matrixInverse(Hinvi)
+g_thetai=-matrixVectorMultiply(t(bXi),(ei-gammai)*var_vecinvi)-matrixVectorMultiply(t(var_cori),(ei-gammai)^2*var_vecinvi^2)
+Hinvi=matrixMultiply(t(bXi),bXi*var_vecinvi)-bias_correctioni+8*matrixMultiply(t(var_cori),var_cori*(var_vecinvi^2))
+Hinvi=max(0.2,1.1-iteri/10)*matrixInverse(Hinvi)
 thetai=thetai-as.vector(Hinvi%*%g_thetai)
 tau_eqi <- function(taui) {
-  zi  <- (ei-gammai) / sqrt(gra_stati$var_vec + taui)
-  sum(rho_mcp(zi, lambda = lambda, gamma = a)) - m * eta
+z <- (ei - gammai) / sqrt(gra_stati$var_vec + taui)
+sum(rho_mcp(z, lambda = lambda, gamma = a)) - mi * eta
 }
 taui <- solve_tau(tau_eqi, tau_upper)
 iteri=iteri+1
-if(iteri>5) errori=sqrt(sum((thetai-theta1i)^2))
+if(iteri>7) errori=sqrt(sum((thetai-theta1i)^2))
 }
 ThetaMatrix[i,]=thetai
 }
@@ -159,7 +168,7 @@ A=list()
 A$theta=c(theta)
 A$theta.cov=theta.cov
 A$theta.se=theta.se
-A$gamma=gamma
+A$gamma=gamma*byseinv
 A$theta.bootstrap=ThetaMatrix
 A$tau=tau
 }
