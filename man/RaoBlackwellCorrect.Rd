@@ -33,7 +33,7 @@ RaoBlackwellCorrect(
 
 \item{onlyexposure}{A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.}
 
-\item{warnings}{A indicator of whether printing warnings. Defaults to \codet{TRUE}.}
+\item{warnings}{A indicator of whether printing warnings. Defaults to \code{TRUE}.}
 }
 \value{
 A list containing:

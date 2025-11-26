@@ -11,7 +11,7 @@
 #' @param B Number of samples used in rejection sampling (default = 1000).
 #' @param onlyexposure A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.
 #' @param kappa_thres Numeric threshold controlling the removal of SNPs with unstable RBC covariance; if the condition number of the corrected covariance exceeds kappa_thres * kappa(Rxy) the SNP is discarded. Defaults to \code{2}.
-#' @param warnings A indicator of whether printing warnings. Defaults to \codet{TRUE}.
+#' @param warnings A indicator of whether printing warnings. Defaults to \code{TRUE}.
 #'
 #' @return A list containing:
 #' \describe{
