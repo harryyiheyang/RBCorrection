@@ -30,9 +30,37 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// grapple_stat_multi_cpp
+Rcpp::List grapple_stat_multi_cpp(const arma::cube& RxyList, const arma::vec& theta, int n_threads);
+RcppExport SEXP _RBCorrection_grapple_stat_multi_cpp(SEXP RxyListSEXP, SEXP thetaSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::cube& >::type RxyList(RxyListSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(grapple_stat_multi_cpp(RxyList, theta, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
+// grapple_stat_uni_cpp
+Rcpp::List grapple_stat_uni_cpp(const arma::cube& RxyList, double theta, int n_threads);
+RcppExport SEXP _RBCorrection_grapple_stat_uni_cpp(SEXP RxyListSEXP, SEXP thetaSEXP, SEXP n_threadsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const arma::cube& >::type RxyList(RxyListSEXP);
+    Rcpp::traits::input_parameter< double >::type theta(thetaSEXP);
+    Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
+    rcpp_result_gen = Rcpp::wrap(grapple_stat_uni_cpp(RxyList, theta, n_threads));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_RBCorrection_RaoBlackwell", (DL_FUNC) &_RBCorrection_RaoBlackwell, 9},
+    {"_RBCorrection_grapple_stat_multi_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_multi_cpp, 3},
+    {"_RBCorrection_grapple_stat_uni_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_uni_cpp, 3},
     {NULL, NULL, 0}
 };
 

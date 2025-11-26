@@ -11,7 +11,8 @@ RaoBlackwellCorrect(
   eta = 1,
   pv.threshold,
   B = 1000,
-  onlyexposure = T
+  onlyexposure = T,
+  warnings = T
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ RaoBlackwellCorrect(
 \item{B}{Number of samples used in rejection sampling (default = 1000).}
 
 \item{onlyexposure}{A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.}
+
+\item{warnings}{A indicator of whether printing warnings. Defaults to \codet{TRUE}.}
 }
 \value{
 A list containing:

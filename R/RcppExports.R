@@ -5,3 +5,33 @@ RaoBlackwell <- function(beta_select, se_select, Rxy, Rxysqrt, eta, cutoff, B, o
     .Call(`_RBCorrection_RaoBlackwell`, beta_select, se_select, Rxy, Rxysqrt, eta, cutoff, B, onlyexposure, n_threads)
 }
 
+#' GRAPPLE stat (multivariable) in C++ with OpenMP
+#'
+#' @param RxyList A (p+1) x (p+1) x m cube, the k-th slice is the
+#'   (p+1) x (p+1) matrix for SNP k.
+#' @param theta A length-p vector of current causal effect estimates.
+#' @param n_threads Number of OpenMP threads.
+#'
+#' @return List with var_vec (length m), var_cor (m x p),
+#'   bias_correction (p x p).
+#'
+#' @export
+grapple_stat_multi_cpp <- function(RxyList, theta, n_threads = 1L) {
+    .Call(`_RBCorrection_grapple_stat_multi_cpp`, RxyList, theta, n_threads)
+}
+
+#' GRAPPLE stat (univariable) in C++ with OpenMP
+#'
+#' @param RxyList A 2 x 2 x m cube. The k-th slice is the 2 x 2
+#'   matrix for SNP k.
+#' @param theta Scalar causal effect estimate.
+#' @param n_threads Number of OpenMP threads.
+#'
+#' @return List with var_vec (length m), var_cor (length m),
+#'   bias_correction (scalar).
+#'
+#' @export
+grapple_stat_uni_cpp <- function(RxyList, theta, n_threads = 1L) {
+    .Call(`_RBCorrection_grapple_stat_uni_cpp`, RxyList, theta, n_threads)
+}
+

@@ -10,6 +10,7 @@
 #' @param pv.threshold P-value threshold used for selection.
 #' @param B Number of samples used in rejection sampling (default = 1000).
 #' @param onlyexposure A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.
+#' @param warnings A indicator of whether printing warnings. Defaults to \codet{TRUE}.
 #'
 #' @return A list containing:
 #' \describe{
@@ -19,8 +20,10 @@
 #'
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.threshold,
-                                B = 1000, onlyexposure=T) {
+                                B = 1000, onlyexposure=T,warnings=T) {
+if(warnings){
 cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
+}
 stopifnot(all(dim(BETA_Select) == dim(SE_Select)))
 stopifnot(ncol(BETA_Select) == nrow(Rxy))
 stopifnot(nrow(Rxy) == ncol(Rxy))

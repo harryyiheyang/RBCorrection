@@ -17,7 +17,7 @@ m=1000
 n=3e4
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
 #Rxy=diag(2)
-BETA=SE=COV=REJ=matrix(0,300,5)
+BETA=SE=COV=REJ=matrix(0,300,6)
 theta0=0.2
 IV.theshold=0.05
 pleio.ratio=0
@@ -50,15 +50,19 @@ fit2=MRBEE.IMRP.UV(by=by[RB$IVselect],byse=byse[RB$IVselect],bx=RB$BETA_RB,bxse=
 
 pv=pchisq((bx/bxse)^2+rnorm(m,0,eta)^2,1,lower.tail=F)
 indselect=which(pv<IV.theshold)
-RB=RaoBlackwellCorrect(BETA_Select=cbind(bx[indselect],by[indselect]),SE_Select=cbind(bxse[indselect],byse[indselect]),Rxy=Rxy,eta=eta,pv.threshold=IV.theshold,B=1000)
+RB=RaoBlackwellCorrect(BETA_Select=cbind(bx[indselect],by[indselect]),SE_Select=cbind(bxse[indselect],byse[indselect]),Rxy=Rxy,eta=eta,pv.threshold=IV.theshold,B=1000,warnings=F)
 fit3=MRBEE_UV_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(2)*0,ldsc=c(1:m)*0)
-BETA[i,]=c(fitAPSS$beta,fit0$theta,fit1$theta,fit2$theta,fit3$theta)
-SE[i,]=sqrt(c(fitAPSS$beta.se^2,fit0$vartheta,fit1$vartheta,fit2$vartheta,fit3$vartheta))
+fit4=MRRAPS_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(2)*0,ldsc=c(1:m)*0)
+
+BETA[i,]=c(fitAPSS$beta,fit0$theta,fit1$theta,fit2$theta,fit3$theta,fit4$theta)
+SE[i,]=sqrt(c(fitAPSS$beta.se^2,fit0$vartheta,fit1$vartheta,fit2$vartheta,fit3$theta.var,fit4$theta.var))
 COV[i,]=covfreq(BETA[i,],SE[i,],theta0)
 REJ[i,]=rejfreq(BETA[i,],SE[i,])
-
 i=i+1
-print(i)
+if(i%%10==0){
+boxplot(BETA[1:i,])
+print(colMeans(COV[1:i,]))
+}
 }, error = function(e) {
 # Error handling block
 cat("Error occurred: ", e$message, " at ",i,"th iteration\n")
