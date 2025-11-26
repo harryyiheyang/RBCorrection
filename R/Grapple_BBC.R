@@ -168,7 +168,7 @@ A=list()
 A$theta=c(theta)
 A$theta.cov=theta.cov
 A$theta.se=theta.se
-A$gamma=gamma*byseinv
+A$gamma=gamma/byseinv
 A$theta.bootstrap=ThetaMatrix
 A$tau=tau
 }

@@ -146,7 +146,7 @@ A=list()
 A$theta=theta
 A$theta.var=theta.var
 A$theta.se=theta.se
-A$gamma=gamma*byseinv
+A$gamma=gamma/byseinv
 A$theta.bootstrap=ThetaVec
 A$tau=tau
 return(A)

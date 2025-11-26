@@ -137,7 +137,7 @@ A=list()
 A$theta=c(theta)
 A$theta.var=theta.var
 A$theta.se=theta.se
-A$gamma=gamma*byseinv
+A$gamma=gamma/byseinv
 A$theta.bootstrap=ThetaVec
 return(A)
 }

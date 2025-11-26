@@ -11,7 +11,7 @@ RaoBlackwellCorrect(
   eta = 1,
   pv.threshold,
   B = 1000,
-  kappa_thres = 3,
+  kappa_thres = 10,
   onlyexposure = T,
   warnings = T
 )
@@ -29,7 +29,7 @@ RaoBlackwellCorrect(
 
 \item{B}{Number of samples used in rejection sampling (default = 1000).}
 
-\item{kappa_thres}{Numeric threshold controlling the removal of SNPs with unstable RBC covariance; if the condition number of the corrected covariance exceeds kappa_thres * kappa(Rxy) the SNP is discarded. Defaults to \code{2}.}
+\item{kappa_thres}{Numeric threshold controlling the removal of SNPs with unstable RBC covariance; if the condition number of the corrected covariance exceeds kappa_thres * kappa(Rxy) the SNP is discarded. Defaults to \code{10}.}
 
 \item{onlyexposure}{A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.}
 
