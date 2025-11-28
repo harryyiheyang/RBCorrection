@@ -51,7 +51,7 @@
 #' @importFrom MASS rlm
 #' @export
 
-MRcML_UV_BBC=function(by,bx,byse,bxse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=5,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_UV_BBC=function(by,bx,byse,bxse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=5,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 ######### Basic Processing  ##############
 by=by/byse
 byseinv=1/byse
@@ -61,10 +61,9 @@ byse1=byse
 byse=byse/byse
 n=m=length(by)
 p=1
-ThetaList=RxyList=array(0,c(p+1,p+1,m))
+ThetaList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
 A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
-RxyList[,,i]=A
 ThetaList[,,i]=solve(A)
 }
 ########## Initial Estimation ############
@@ -73,20 +72,19 @@ theta.ini=fit.ini$coefficients
 theta=theta.ini
 theta1=10000
 e=c(by-bx*theta)
-gamma.ini=soft(e,lambda)
+gamma.ini=soft(e,3)
 gamma=gamma.ini
 bxest=bx
-bxest[abs(bx)<0.25]=0
 ########## Iteration ###################
 error=abs(theta-theta1)
 iter=0
+Thetayy=ThetaList[p+1,p+1,]
+ThetaX2y=ThetaList[1:p,p+1,]
 while(error>max.eps&iter<max.iter){
 theta1=theta
 e=by-gamma
 bxest=MRcML_UV_bxest(ThetaList,bx,e,theta,n_threads)
-Thetayy=ThetaList[2,2,]
 H=sum(bxest^2*Thetayy)
-ThetaX2y=ThetaList[1,2,]
 g=sum(bxest*(by-gamma)*Thetayy)+sum(bxest*(bx-bxest)*ThetaX2y)
 theta=g/H
 res=(bx-bxest)*ThetaX2y/Thetayy+by-bxest*theta
@@ -109,17 +107,16 @@ bxi=bx[ind]
 bxesti=bx[ind]
 byi=by[ind]
 gammai=gamma[ind]
-RxyListi <- RxyList[,,ind]
 ThetaListi=ThetaList[,,ind]
 errori=abs(thetai-theta1i)
 iteri=0
+ThetaX2yi=ThetaListi[1:p,p+1,]
+Thetayyi=ThetaListi[p+1,p+1,]
 while(errori>max.eps&iteri<max.iter){
 theta1i=thetai
 ei=byi-gammai
 bxesti=MRcML_UV_bxest(ThetaListi,bxi,ei,thetai,n_threads)
-Thetayyi=ThetaListi[2,2,]
 Hi=sum(bxesti^2*Thetayyi)
-ThetaX2yi=ThetaListi[1,2,]
 gi=sum(bxesti*(byi-gammai)*Thetayyi)+sum(bxesti*(bxi-bxesti)*ThetaX2yi)
 thetai=gi/Hi
 resi=(bxi-bxesti)*ThetaX2yi/Thetayyi+byi-bxesti*thetai

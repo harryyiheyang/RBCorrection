@@ -86,9 +86,7 @@ theta.ini=fit.ini$theta
 theta=theta.ini
 theta1=10000
 e=c(by-matrixVectorMultiply(bX,theta))
-indvalid=which(fit.ini$gamma==0)
-gamma.ini=soft(e,1)
-gamma.ini[indvalid]=0
+gamma.ini=soft(e,3)
 gamma=gamma.ini
 tau=0.1
 ########## Iteration ###################

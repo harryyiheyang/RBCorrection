@@ -64,7 +64,7 @@
 #' @import CppMatrix
 #' @export
 
-MRcML_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=5,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=5,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
 A=MRcML_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
 }else{
@@ -78,10 +78,9 @@ byse1=byse
 byse=byse/byse
 n=m=length(by)
 p=ncol(bX)
-ThetaList=RxyList=array(0,c(p+1,p+1,m))
+ThetaList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
 A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
-RxyList[,,i]=A
 ThetaList[,,i]=solve(A)
 }
 ########## Initial Estimation ############
@@ -89,22 +88,19 @@ theta.ini=fit.ini$theta
 theta=theta.ini
 theta1=10000
 e=c(by-matrixVectorMultiply(bX,theta))
-indvalid=which(fit.ini$gamma==0)
-gamma.ini=soft(e,1)
-gamma.ini[indvalid]=0
+gamma.ini=soft(e,3)
 gamma=gamma.ini
 bXest=bX
-bXest[abs(bX)<0.25]=0
 ########## Iteration ###################
 error=sqrt(sum((theta-theta1)^2))
 iter=0
+Thetayy=ThetaList[p+1,p+1,]
+ThetaX2y=ThetaList[1:p,p+1,]
 while(error>max.eps&iter<max.iter){
 theta1=theta
 e=by-gamma
 bXest=MRcML_bXest(ThetaList,bX,e,theta,n_threads)
-Thetayy=ThetaList[p+1,p+1,]
 H=matrixMultiply(t(bXest),bXest*Thetayy)
-ThetaX2y=ThetaList[1:p,p+1,]
 g=matrixVectorMultiply(t(bXest),(by-gamma)*Thetayy)+matrixVectorMultiply(t(bXest),diag(matrixMultiply(bX-bXest,ThetaX2y)))
 theta=as.vector(solve(H)%*%g)
 res=diag(matrixMultiply(bX-bXest,ThetaX2y))/Thetayy+by-matrixVectorMultiply(bXest,theta)
@@ -127,17 +123,16 @@ bXi=bX[ind,]
 bXesti=bX[ind,]
 byi=by[ind]
 gammai=gamma[ind]
-RxyListi <- RxyList[,,ind]
 ThetaListi=ThetaList[,,ind]
 errori=sqrt(sum((thetai-theta1i)^2))
 iteri=0
+ThetaX2yi=ThetaListi[1:p,p+1,]
+Thetayyi=ThetaListi[p+1,p+1,]
 while(errori>max.eps&iteri<max.iter){
 theta1i=thetai
 ei=byi-gammai
 bXesti=MRcML_bXest(ThetaListi,bXi,ei,thetai,n_threads)
-Thetayyi=ThetaListi[p+1,p+1,]
 Hi=matrixMultiply(t(bXesti),bXesti*Thetayyi)
-ThetaX2yi=ThetaListi[1:p,p+1,]
 gi=matrixVectorMultiply(t(bXesti),(byi-gammai)*Thetayyi)+matrixVectorMultiply(t(bXesti),diag(matrixMultiply(bXi-bXesti,ThetaX2yi)))
 thetai=as.vector(solve(Hi)%*%gi)
 resi=diag(matrixMultiply(bXi-bXesti,ThetaX2yi))/Thetayyi+byi-matrixVectorMultiply(bXesti,thetai)

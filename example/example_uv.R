@@ -13,10 +13,10 @@ library(devtools)
 library(MRAPSS)
 library(dplyr)
 document()
-m=1000
+m=500
 n=3e4
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
-#Rxy=diag(2)
+Rxy=diag(2)
 BETA=SE=COV=REJ=matrix(0,300,7)
 theta0=0.2
 IV.theshold=0.05
@@ -34,7 +34,7 @@ betay=betax*theta0
 E=mvrnorm(n=m,mu=rep(0,2),Sigma=Rxy)
 E=E%*%diag(sqrt(c(1/n,1/n)))
 bx=betax+E[,1]
-by=betay+E[,2]+ifelse(pleio.ratio>0,rbinom(m,1,pleio.ratio)*rnorm(m,0,sqrt(0.001/pleio.ratio)),0)+rnorm(m,0,0.3/sqrt(n))
+by=betay+E[,2]+ifelse(pleio.ratio>0,rbinom(m,1,pleio.ratio)*rnorm(m,0,sqrt(0.001/pleio.ratio)),0)
 bxse=byse=rep(sqrt(1/n),m)
 print((mean(bx^2)-bxse[1]^2)/mean(bx^2))
 pv=pchisq((bx/bxse)^2,1,lower.tail=F)
@@ -62,6 +62,7 @@ REJ[i,]=rejfreq(BETA[i,],SE[i,])
 i=i+1
 if(i%%10==0){
 boxplot(BETA[1:i,])
+lines(c(0:8),rep(theta0,9))
 print(colMeans(COV[1:i,]))
 }
 }, error = function(e) {
