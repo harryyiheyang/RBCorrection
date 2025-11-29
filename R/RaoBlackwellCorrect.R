@@ -21,7 +21,7 @@
 #'
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.threshold,
-                                B = 1000, kappa_thres=10, onlyexposure=T,warnings=T) {
+                                B = 1000, kappa_thres=50, onlyexposure=T,warnings=T) {
 if(warnings){
 cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
 }

@@ -11,7 +11,7 @@ RaoBlackwellCorrect(
   eta = 1,
   pv.threshold,
   B = 1000,
-  kappa_thres = 10,
+  kappa_thres = 50,
   onlyexposure = T,
   warnings = T
 )

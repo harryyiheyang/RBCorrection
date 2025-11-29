@@ -64,7 +64,7 @@
 #' @import CppMatrix
 #' @export
 
-MRcML_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=5,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
 A=MRcML_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
 }else{
@@ -101,10 +101,10 @@ theta1=theta
 e=by-gamma
 bXest=MRcML_bXest(ThetaList,bX,e,theta,n_threads)
 H=matrixMultiply(t(bXest),bXest*Thetayy)
-g=matrixVectorMultiply(t(bXest),(by-gamma)*Thetayy)+matrixVectorMultiply(t(bXest),diag(matrixMultiply(bX-bXest,ThetaX2y)))
+g=matrixVectorMultiply(t(bXest),(by-gamma)*Thetayy+rowSums((bX-bXest)*t(ThetaX2y)))
 theta=as.vector(solve(H)%*%g)
-res=diag(matrixMultiply(bX-bXest,ThetaX2y))/Thetayy+by-matrixVectorMultiply(bXest,theta)
-gamma=mcp(res,lam=lambda/Thetayy,a=a)
+res=rowSums((bX-bXest)*t(ThetaX2y))/Thetayy+by-matrixVectorMultiply(bXest,theta)
+gamma=mcp(res,lam=lambda/Thetayy*byse,a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 iter=iter+1
 if(iter>10) error=sqrt(sum((theta-theta1)^2))
@@ -133,10 +133,10 @@ theta1i=thetai
 ei=byi-gammai
 bXesti=MRcML_bXest(ThetaListi,bXi,ei,thetai,n_threads)
 Hi=matrixMultiply(t(bXesti),bXesti*Thetayyi)
-gi=matrixVectorMultiply(t(bXesti),(byi-gammai)*Thetayyi)+matrixVectorMultiply(t(bXesti),diag(matrixMultiply(bXi-bXesti,ThetaX2yi)))
+gi=matrixVectorMultiply(t(bXesti),(byi-gammai)*Thetayyi+rowSums((bXi-bXesti)*t(ThetaX2yi)))
 thetai=as.vector(solve(Hi)%*%gi)
-resi=diag(matrixMultiply(bXi-bXesti,ThetaX2yi))/Thetayyi+byi-matrixVectorMultiply(bXesti,thetai)
-gammai=mcp(resi,lam=lambda/Thetayyi,a=a)
+resi=rowSums((bXi-bXesti)*t(ThetaX2yi))/Thetayyi+byi-matrixVectorMultiply(bXesti,thetai)
+gammai=mcp(resi,lam=lambda/Thetayyi*byse[ind],a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 iteri=iteri+1
 if(iteri>7) errori=sqrt(sum((thetai-theta1i)^2))

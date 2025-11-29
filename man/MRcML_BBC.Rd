@@ -14,7 +14,7 @@ MRcML_BBC(
   cov_RB,
   max.iter = 30,
   max.eps = 1e-05,
-  lambda = 5,
+  lambda = 3,
   a = 3,
   sampling.time = 300,
   n_threads = 4,
