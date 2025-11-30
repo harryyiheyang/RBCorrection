@@ -1,0 +1,28 @@
+Package: RBCorrection
+Type: Package
+Title: Winner's Curse Removal by using Rao-Blackwellization for Univariable and Multivariable Mendelian Randomization
+Version: 0.1.0
+Author: Yihe Yang
+Maintainer: Yihe Yang <yxy1234@case.edu>
+Description: 
+    This package provides functions for removing winner's curse bias in both univariable and multivariable Mendelian Randomization (MR) studies, by using Rao-Blackwellization. 
+    It implements methods including randomized instrument selection, Rao-Blackwellization, and re-randomized IVW (RIVW) estimators, as described in Ma, Wang, and Wu (2023, Annals of Statistics).
+    The package supports downstream MR estimation using corrected SNP-exposure effect estimates and standard errors, improving statistical validity in settings with weak instruments or selection bias.
+License: MIT + file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
+Imports:
+    stats,
+    abind,
+    data.table,
+    MASS,
+    CppMatrix,
+    Matrix
+LinkingTo:
+    Rcpp,
+    RcppArmadillo
+Depends: R (>= 3.6.0)
+Remotes:
+    harryyiheyang/CppMatrix,
+ORCID: 0000-0001-6563-3579
