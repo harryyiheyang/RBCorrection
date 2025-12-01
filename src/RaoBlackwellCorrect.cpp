@@ -43,7 +43,7 @@ List RaoBlackwell(NumericMatrix beta_select,
   std::vector<arma::mat> CovList(m);
   std::vector<int> corrected_indices;
 
-  const int max_draws = 5 * B;  // 改为 5*B
+  const int max_draws = 5 * B;
 
 #ifdef _OPENMP
   if (n_threads > 0) {
@@ -53,7 +53,6 @@ List RaoBlackwell(NumericMatrix beta_select,
 
 #pragma omp parallel for schedule(dynamic)
   for (int i = 0; i < m; ++i) {
-    // Thread-local random generator
     std::random_device rd;
     unsigned int seed = rd() + i * 9973;
 #ifdef _OPENMP
@@ -65,7 +64,6 @@ List RaoBlackwell(NumericMatrix beta_select,
     arma::rowvec beta_i = Beta.row(i);
     arma::rowvec se_i = SE.row(i);
 
-    // 步骤1: 生成 5*B x p1 的标准正态随机数矩阵
     arma::mat Z(max_draws, p1);
     for (int draw = 0; draw < max_draws; ++draw) {
       for (int j = 0; j < p1; ++j) {
@@ -73,20 +71,16 @@ List RaoBlackwell(NumericMatrix beta_select,
       }
     }
 
-    // 步骤2: 对每一列进行 demean (中心化)
     Z.each_row() -= arma::mean(Z, 0);
 
-    // 步骤3: 通过 sqrt(R) 生成相关随机数
-    // E = Z * L^T, 其中 L = eta * Rxysqrt
-    arma::mat E = Z * L.t();  // max_draws x p1
 
-    // 计算 z0 = beta / se
+    arma::mat E = Z * L.t();
+
     arma::vec z0 = arma::conv_to<arma::vec>::from(beta_i / se_i);
 
     std::vector<arma::rowvec> accepted;
     accepted.reserve(B);
 
-    // 步骤4: 逐个检查是否满足条件，直到接受 B 个或用完所有抽样
     for (int draw = 0; draw < max_draws; ++draw) {
       if ((int)accepted.size() >= B) break;
 
@@ -108,9 +102,7 @@ List RaoBlackwell(NumericMatrix beta_select,
       }
     }
 
-    // 步骤5: 根据接受样本数量决定如何处理
     if ((int)accepted.size() >= min_accept) {
-      // 足够的样本：使用校正
       arma::mat acc_mat(accepted.size(), p1);
       for (size_t j = 0; j < accepted.size(); ++j) {
         acc_mat.row(j) = accepted[j];
@@ -122,16 +114,14 @@ List RaoBlackwell(NumericMatrix beta_select,
 
 #pragma omp critical
 {
-  corrected_indices.push_back(i + 1);  // R uses 1-based indexing
+  corrected_indices.push_back(i + 1);
 }
     } else {
-      // 样本不足：使用原始数据，并标记协方差矩阵
       BETA_RB.row(i) = beta_i;
       SE_RB.row(i) = se_i;
 
-      // 创建协方差矩阵并将最后一个对角元设为 -1 作为标记
       CovList[i] = arma::mat(p1, p1, arma::fill::zeros);
-      CovList[i](p1 - 1, p1 - 1) = -1.0;  // 标记为无效
+      CovList[i](p1 - 1, p1 - 1) = -1.0;
     }
   }
 
