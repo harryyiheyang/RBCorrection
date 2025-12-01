@@ -61,8 +61,9 @@ if (length(indvalid)<=length(pv)*0.5) {
 indvalid.cut=which(pv>=stats::quantile(pv,0.5))
 indvalid=union(indvalid,indvalid.cut)
 }
-h=sum(bx[indvalid]^2)-sum(RxyList[1,1,indvalid])
-g=sum(bx[indvalid]*by[indvalid])-sum(RxyList[1,2,indvalid])
+var_e=mean(e[indvalid]^2)
+h=sum(bx[indvalid]^2)-sum(RxyList[1,1,indvalid]*e[indvalid]^2/var_e)
+g=sum(bx[indvalid]*by[indvalid])-sum(RxyList[1,2,indvalid]*e[indvalid]^2/var_e)
 theta=g/h
 iter=iter+1
 if (iter>5) error=abs(theta-theta1)
@@ -96,8 +97,9 @@ if (length(indvalidi)<=length(pvi)*0.5) {
   indvalid.cut=which(pvi>=stats::quantile(pvi,0.5))
   indvalidi=union(indvalidi,indvalid.cut)
 }
-hi=sum(bxi[indvalidi]^2)-sum(RxyListi[1,1,indvalidi])
-gi=sum(bxi[indvalidi]*byi[indvalidi])-sum(RxyListi[1,2,indvalidi])
+var_ei=mean(ei[indvalidi]^2)
+hi=sum(bxi[indvalidi]^2)-sum(RxyListi[1,1,indvalidi]*ei[indvalidi]^2/var_ei)
+gi=sum(bxi[indvalidi]*byi[indvalidi])-sum(RxyListi[1,2,indvalidi]*ei[indvalidi]^2/var_ei)
 thetai=gi/hi
 iteri=iteri+1
 if (iteri>7) errori=abs(thetai-theta1i)

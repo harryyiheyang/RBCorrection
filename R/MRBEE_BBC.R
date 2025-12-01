@@ -48,7 +48,7 @@ for(i in 1:m){
 A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
 RxyList[,,i]=A
 }
-Rxyall=biasterm(RxyList=RxyList,c(1:n),n_threads=n_threads)
+Rxyall=biasterm(RxyList=RxyList,c(1:n),rep(1,n),n_threads=n_threads)
 ########## Initial Estimation ############
 fit=MASS::rlm(by~bX-1)
 theta.ini=fit$coefficient
@@ -69,11 +69,8 @@ if (length(indvalid) <= length(pv) * 0.5) {
 indvalid.cut = which(pv >= stats::quantile(pv, 0.5))
 indvalid = union(indvalid, indvalid.cut)
 }
-if(length(indvalid)==n){
-Rxysum=Rxyall
-}else{
-Rxysum=Rxyall-biasterm(RxyList=RxyList,setdiff(1:n,indvalid),n_threads)
-}
+var_e=mean(e[indvalid]^2)
+Rxysum=biasterm(RxyList=RxyList,indvalid = indvalid,weight = e^2/var_e,n_threads = n_threads)
 Hinv=matrixMultiply(t(bX[indvalid,]),bX[indvalid,])-Rxysum[1:p,1:p]
 Hinv=matrixInverse(Hinv)
 g=matrixVectorMultiply(t(bX[indvalid,]),by[indvalid])-Rxysum[1+p,1:p]
@@ -109,7 +106,8 @@ if (length(indvalidi) <= length(pvi) * 0.5) {
 indvalid.cut = which(pvi >= stats::quantile(pvi, 0.5))
 indvalidi = union(indvalidi, indvalid.cut)
 }
-Rxysumi=biasterm(RxyList=RxyListi,indvalidi,n_threads)
+var_ei=mean(ei[indvalidi]^2)
+Rxysumi=biasterm(RxyList=RxyListi,indvalid = indvalidi,weight = ei^2/var_ei,n_threads = n_threads)
 Hinvi=matrixMultiply(t(bXi[indvalidi,]),bXi[indvalidi,])-Rxysumi[1:p,1:p]
 Hinvi=matrixInverse(Hinvi)
 gi=matrixVectorMultiply(t(bXi[indvalidi,]),byi[indvalidi])-Rxysumi[1+p,1:p]

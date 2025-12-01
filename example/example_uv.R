@@ -13,9 +13,9 @@ library(devtools)
 library(MRAPSS)
 library(dplyr)
 document()
-devtools::load_all("C:/Users/y1363/Downloads/MRcare-main/")
+devtools::load_all("C:/Users/yxy1234/Downloads/MRcare-main/")
 m=1000
-n=5e5
+n=2.5e5
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
 Rxy=diag(2)
 BETA=SE=COV=REJ=matrix(0,300,8)
@@ -63,7 +63,7 @@ COV[i,]=covfreq(BETA[i,],SE[i,],theta0)
 REJ[i,]=rejfreq(BETA[i,],SE[i,])
 i=i+1
 if(i%%10==0){
-boxplot(BETA[1:i,],ylim=c(0.45,0.55))
+boxplot(BETA[1:i,],ylim=c(0.475,0.525))
 lines(c(0:8),rep(theta0,9))
 print(colMeans(COV[1:i,]))
 }

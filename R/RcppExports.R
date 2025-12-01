@@ -16,11 +16,11 @@ grapple_stat_uni_cpp <- function(RxyList, theta, e, n_threads = 1L) {
     .Call(`_RBCorrection_grapple_stat_uni_cpp`, RxyList, theta, e, n_threads)
 }
 
-#' Sum selected slices of a 3D array (cube) with OpenMP
+#' Sum selected slices of a 3D array (cube) with weights and OpenMP
 NULL
 
-biasterm <- function(RxyList, indvalid, n_threads = 1L) {
-    .Call(`_RBCorrection_biasterm`, RxyList, indvalid, n_threads)
+biasterm <- function(RxyList, indvalid, weight, n_threads = 1L) {
+    .Call(`_RBCorrection_biasterm`, RxyList, indvalid, weight, n_threads)
 }
 
 #' MRcML_bXest in C++ with OpenMP (multivariable)

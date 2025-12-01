@@ -60,15 +60,16 @@ BEGIN_RCPP
 END_RCPP
 }
 // biasterm
-arma::mat biasterm(const arma::cube& RxyList, const arma::uvec& indvalid, int n_threads);
-RcppExport SEXP _RBCorrection_biasterm(SEXP RxyListSEXP, SEXP indvalidSEXP, SEXP n_threadsSEXP) {
+arma::mat biasterm(const arma::cube& RxyList, const arma::uvec& indvalid, const arma::vec& weight, int n_threads);
+RcppExport SEXP _RBCorrection_biasterm(SEXP RxyListSEXP, SEXP indvalidSEXP, SEXP weightSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< const arma::cube& >::type RxyList(RxyListSEXP);
     Rcpp::traits::input_parameter< const arma::uvec& >::type indvalid(indvalidSEXP);
+    Rcpp::traits::input_parameter< const arma::vec& >::type weight(weightSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(biasterm(RxyList, indvalid, n_threads));
+    rcpp_result_gen = Rcpp::wrap(biasterm(RxyList, indvalid, weight, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -107,7 +108,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_RBCorrection_RaoBlackwell", (DL_FUNC) &_RBCorrection_RaoBlackwell, 10},
     {"_RBCorrection_grapple_stat_multi_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_multi_cpp, 4},
     {"_RBCorrection_grapple_stat_uni_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_uni_cpp, 4},
-    {"_RBCorrection_biasterm", (DL_FUNC) &_RBCorrection_biasterm, 3},
+    {"_RBCorrection_biasterm", (DL_FUNC) &_RBCorrection_biasterm, 4},
     {"_RBCorrection_MRcML_bXest", (DL_FUNC) &_RBCorrection_MRcML_bXest, 5},
     {"_RBCorrection_MRcML_UV_bxest", (DL_FUNC) &_RBCorrection_MRcML_UV_bxest, 5},
     {NULL, NULL, 0}
