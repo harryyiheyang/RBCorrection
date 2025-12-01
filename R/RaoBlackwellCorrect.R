@@ -21,79 +21,97 @@
 #'
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.threshold,
-                                B = 1000, kappa_thres=10, onlyexposure=T,warnings=T) {
-if(warnings){
-cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
-}
-stopifnot(all(dim(BETA_Select) == dim(SE_Select)))
-stopifnot(ncol(BETA_Select) == nrow(Rxy))
-stopifnot(nrow(Rxy) == ncol(Rxy))
+                                B = 1000, kappa_thres = 10, onlyexposure = TRUE, warnings = TRUE) {
+  if(warnings) {
+    cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
+  }
 
-# Ensure matrix format with dimnames
-p=ncol(BETA_Select)-1
-if(onlyexposure==T){
-cutoff=qchisq(pv.threshold,p,lower.tail=F)
-}else{
-cutoff=qchisq(pv.threshold,p+1,lower.tail=F)
-}
-BETA_Select <- as.matrix(BETA_Select)
-SE_Select <- as.matrix(SE_Select)
-Rxy <- as.matrix(Rxy)
-Rxysqrt = matrixsqrt(Rxy)$w
+  stopifnot(all(dim(BETA_Select) == dim(SE_Select)))
+  stopifnot(ncol(BETA_Select) == nrow(Rxy))
+  stopifnot(nrow(Rxy) == ncol(Rxy))
 
-if (is.null(rownames(BETA_Select))) rownames(BETA_Select) <- paste0("SNP", seq_len(nrow(BETA_Select)))
-if (is.null(colnames(BETA_Select))) colnames(BETA_Select) <- paste0("Exp", seq_len(ncol(BETA_Select)))
-rownames(SE_Select) <- rownames(BETA_Select)
-colnames(SE_Select) <- colnames(BETA_Select)
+  # Ensure matrix format with dimnames
+  p = ncol(BETA_Select) - 1
 
-res <- .Call(`_RBCorrection_RaoBlackwell`, beta_select=BETA_Select, se_select=SE_Select,
-         Rxy=Rxy, Rxysqrt=Rxysqrt, eta=eta,cutoff=cutoff, B=B, onlyexposure=onlyexposure,n_threads=floor(parallel::detectCores() / 2))
-res$SE_RB[res$CORRECTED_INDICES,]=sqrt(SE_Select[res$CORRECTED_INDICES,]^2*(1+1/eta^2))
+  if(onlyexposure == TRUE) {
+    cutoff = qchisq(pv.threshold, p, lower.tail = FALSE)
+  } else {
+    cutoff = qchisq(pv.threshold, p + 1, lower.tail = FALSE)
+  }
 
-for(i in 1:length(res$COV_RB)){
-s=res$SE_RB[i,]
-res$COV_RB[[i]]=t(t(Rxy)*s)*s-res$COV_RB[[i]]
-s=sqrt(diag(res$COV_RB[[i]]))
-s[is.na(s)]=0
-res$SE_RB[i,]=s
-}
+  BETA_Select <- as.matrix(BETA_Select)
+  SE_Select <- as.matrix(SE_Select)
+  Rxy <- as.matrix(Rxy)
+  Rxysqrt <- matrixsqrt(Rxy)$w
 
-condition_check = function(res, thres = 3) {
-ind1 = which(!is.na(res$SE_RB[, p+1]) & res$SE_RB[, p+1] > 0)
-ind2 = integer(0)
-for (i in seq_along(res$COV_RB)) {
-sevec   = SE_Select[i, ]
-kapparxy = kappa(t(t(Rxy) * sevec) * sevec)
-S        = res$COV_RB[[i]]
-i1       = (diag(S) <= 0)
-i2_flag  = kappa(S) > (thres * kapparxy)
+  if (is.null(rownames(BETA_Select))) rownames(BETA_Select) <- paste0("SNP", seq_len(nrow(BETA_Select)))
+  if (is.null(colnames(BETA_Select))) colnames(BETA_Select) <- paste0("Exp", seq_len(ncol(BETA_Select)))
+  rownames(SE_Select) <- rownames(BETA_Select)
+  colnames(SE_Select) <- colnames(BETA_Select)
 
-if (sum(i1) + sum(i2_flag) == 0) {
-ind2 = c(ind2, i)
-}
-}
-ind = intersect(ind1, ind2)
-return(ind)
-}
+  res <- RaoBlackwell(
+    beta_select = BETA_Select,
+    se_select = SE_Select,
+    Rxy = Rxy,
+    Rxysqrt = Rxysqrt,
+    eta = eta,
+    cutoff = cutoff,
+    B = B,
+    min_accept = floor(B/2),
+    onlyexposure = onlyexposure,
+    n_threads = floor(parallel::detectCores() / 2)
+  )
 
+  res$SE_RB[res$CORRECTED_INDICES, ] = sqrt(SE_Select[res$CORRECTED_INDICES, ]^2 * (1 + 1/eta^2))
 
-ind=condition_check(res,thres=kappa_thres)
-res$BETA_RB=res$BETA_RB[ind,]
-res$SE_RB=res$SE_RB[ind,]
-res$COV_RB=res$COV_RB[ind]
+  for(i in 1:length(res$COV_RB)) {
+    s = res$SE_RB[i, ]
+    res$COV_RB[[i]] = t(t(Rxy) * s) * s - res$COV_RB[[i]]
+    s = sqrt(diag(res$COV_RB[[i]]))
+    s[is.na(s)] = 0
+    res$SE_RB[i, ] = s
+  }
 
-rownames(res$BETA_RB) <- rownames(BETA_Select[ind,])
-colnames(res$BETA_RB) <- colnames(BETA_Select)
-rownames(res$SE_RB) <- rownames(BETA_Select[ind,])
-colnames(res$SE_RB) <- colnames(BETA_Select)
+  condition_check = function(res, thres = 3) {
+    ind1 = which(!is.na(res$SE_RB[, p + 1]) & res$SE_RB[, p + 1] > 0)
+    ind2 = integer(0)
 
-bX_RB=res$BETA_RB[,1:p]
-bXse_RB=res$SE_RB[,1:p]
-by_RB=res$BETA_RB[,1+p]
-byse_RB=res$SE_RB[,1+p]
-if(p==1){
-bX_RB=as.vector(bX_RB)
-bXse_RB=as.vector(bXse_RB)
-}
-return(list(bX_RB=bX_RB,bXse_RB=bXse_RB,by_RB=by_RB,byse_RB=byse_RB,COV_RB=res$COV_RB))
+    for (i in seq_along(res$COV_RB)) {
+      sevec   = SE_Select[i, ]
+      kapparxy = kappa(t(t(Rxy) * sevec) * sevec)
+      S        = res$COV_RB[[i]]
+      i1       = (diag(S) <= 0)
+      i2_flag  = kappa(S) > (thres * kapparxy)
+
+      if (sum(i1) + sum(i2_flag) == 0) {
+        ind2 = c(ind2, i)
+      }
+    }
+
+    ind = intersect(ind1, ind2)
+    return(ind)
+  }
+
+  ind = condition_check(res, thres = kappa_thres)
+
+  res$BETA_RB = res$BETA_RB[ind, ]
+  res$SE_RB = res$SE_RB[ind, ]
+  res$COV_RB = res$COV_RB[ind]
+
+  rownames(res$BETA_RB) <- rownames(BETA_Select[ind, ])
+  colnames(res$BETA_RB) <- colnames(BETA_Select)
+  rownames(res$SE_RB) <- rownames(BETA_Select[ind, ])
+  colnames(res$SE_RB) <- colnames(BETA_Select)
+
+  bX_RB = res$BETA_RB[, 1:p]
+  bXse_RB = res$SE_RB[, 1:p]
+  by_RB = res$BETA_RB[, 1 + p]
+  byse_RB = res$SE_RB[, 1 + p]
+
+  if(p == 1) {
+    bX_RB = as.vector(bX_RB)
+    bXse_RB = as.vector(bXse_RB)
+  }
+
+  return(list(bX_RB = bX_RB, bXse_RB = bXse_RB, by_RB = by_RB, byse_RB = byse_RB, COV_RB = res$COV_RB))
 }

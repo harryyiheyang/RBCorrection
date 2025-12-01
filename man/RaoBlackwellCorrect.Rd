@@ -12,8 +12,8 @@ RaoBlackwellCorrect(
   pv.threshold,
   B = 1000,
   kappa_thres = 10,
-  onlyexposure = T,
-  warnings = T
+  onlyexposure = TRUE,
+  warnings = TRUE
 )
 }
 \arguments{

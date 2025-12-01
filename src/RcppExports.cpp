@@ -12,8 +12,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // RaoBlackwell
-List RaoBlackwell(NumericMatrix beta_select, NumericMatrix se_select, NumericMatrix Rxy, NumericMatrix Rxysqrt, double eta, double cutoff, int B, bool onlyexposure, int n_threads);
-RcppExport SEXP _RBCorrection_RaoBlackwell(SEXP beta_selectSEXP, SEXP se_selectSEXP, SEXP RxySEXP, SEXP RxysqrtSEXP, SEXP etaSEXP, SEXP cutoffSEXP, SEXP BSEXP, SEXP onlyexposureSEXP, SEXP n_threadsSEXP) {
+List RaoBlackwell(NumericMatrix beta_select, NumericMatrix se_select, NumericMatrix Rxy, NumericMatrix Rxysqrt, double eta, double cutoff, int B, int min_accept, bool onlyexposure, int n_threads);
+RcppExport SEXP _RBCorrection_RaoBlackwell(SEXP beta_selectSEXP, SEXP se_selectSEXP, SEXP RxySEXP, SEXP RxysqrtSEXP, SEXP etaSEXP, SEXP cutoffSEXP, SEXP BSEXP, SEXP min_acceptSEXP, SEXP onlyexposureSEXP, SEXP n_threadsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -24,9 +24,10 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< double >::type eta(etaSEXP);
     Rcpp::traits::input_parameter< double >::type cutoff(cutoffSEXP);
     Rcpp::traits::input_parameter< int >::type B(BSEXP);
+    Rcpp::traits::input_parameter< int >::type min_accept(min_acceptSEXP);
     Rcpp::traits::input_parameter< bool >::type onlyexposure(onlyexposureSEXP);
     Rcpp::traits::input_parameter< int >::type n_threads(n_threadsSEXP);
-    rcpp_result_gen = Rcpp::wrap(RaoBlackwell(beta_select, se_select, Rxy, Rxysqrt, eta, cutoff, B, onlyexposure, n_threads));
+    rcpp_result_gen = Rcpp::wrap(RaoBlackwell(beta_select, se_select, Rxy, Rxysqrt, eta, cutoff, B, min_accept, onlyexposure, n_threads));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -103,7 +104,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_RBCorrection_RaoBlackwell", (DL_FUNC) &_RBCorrection_RaoBlackwell, 9},
+    {"_RBCorrection_RaoBlackwell", (DL_FUNC) &_RBCorrection_RaoBlackwell, 10},
     {"_RBCorrection_grapple_stat_multi_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_multi_cpp, 4},
     {"_RBCorrection_grapple_stat_uni_cpp", (DL_FUNC) &_RBCorrection_grapple_stat_uni_cpp, 4},
     {"_RBCorrection_biasterm", (DL_FUNC) &_RBCorrection_biasterm, 3},

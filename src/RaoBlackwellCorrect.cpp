@@ -4,20 +4,23 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
-#include <random>  // for thread-local RNG
+#include <random>
 using namespace Rcpp;
 
 // [[Rcpp::export]]
 List RaoBlackwell(NumericMatrix beta_select,
-                         NumericMatrix se_select,
-                         NumericMatrix Rxy,
-                         NumericMatrix Rxysqrt,
-                         double eta,
-                         double cutoff,
-                         int B,
-                         bool onlyexposure = true,
-                         int n_threads = 1) {
-  int m = beta_select.nrow(), p1 = beta_select.ncol();
+                  NumericMatrix se_select,
+                  NumericMatrix Rxy,
+                  NumericMatrix Rxysqrt,
+                  double eta,
+                  double cutoff,
+                  int B,
+                  int min_accept = 100,
+                  bool onlyexposure = true,
+                  int n_threads = 1) {
+
+  int m = beta_select.nrow();
+  int p1 = beta_select.ncol();
   int p = p1 - 1;
 
   arma::mat Beta(beta_select.begin(), m, p1, false);
@@ -37,8 +40,10 @@ List RaoBlackwell(NumericMatrix beta_select,
 
   arma::mat BETA_RB(m, p1, arma::fill::zeros);
   arma::mat SE_RB(m, p1, arma::fill::zeros);
-  std::vector<arma::mat> CovList(m);  // to store covariance matrices
-  std::vector<int> corrected_indices;  // to store indices of corrected IVs
+  std::vector<arma::mat> CovList(m);
+  std::vector<int> corrected_indices;
+
+  const int max_draws = 5 * B;  // 改为 5*B
 
 #ifdef _OPENMP
   if (n_threads > 0) {
@@ -50,25 +55,42 @@ List RaoBlackwell(NumericMatrix beta_select,
   for (int i = 0; i < m; ++i) {
     // Thread-local random generator
     std::random_device rd;
-    std::mt19937 rng(rd() + i * 9973 + omp_get_thread_num() * 99991);
+    unsigned int seed = rd() + i * 9973;
+#ifdef _OPENMP
+    seed += omp_get_thread_num() * 99991;
+#endif
+    std::mt19937 rng(seed);
     std::normal_distribution<double> norm(0.0, 1.0);
 
     arma::rowvec beta_i = Beta.row(i);
     arma::rowvec se_i = SE.row(i);
 
-    std::vector<arma::rowvec> accepted;
-    int accept_count = 0;
-
-    for (int b = 0; b < 2 * B; ++b) {
-      if (accept_count >= B) break;
-
-      arma::vec z(p1);
+    // 步骤1: 生成 5*B x p1 的标准正态随机数矩阵
+    arma::mat Z(max_draws, p1);
+    for (int draw = 0; draw < max_draws; ++draw) {
       for (int j = 0; j < p1; ++j) {
-        z(j) = norm(rng);
+        Z(draw, j) = norm(rng);
       }
+    }
 
-      arma::vec e = L.t() * z;
-      arma::vec z0 = arma::conv_to<arma::vec>::from(beta_i / se_i);
+    // 步骤2: 对每一列进行 demean (中心化)
+    Z.each_row() -= arma::mean(Z, 0);
+
+    // 步骤3: 通过 sqrt(R) 生成相关随机数
+    // E = Z * L^T, 其中 L = eta * Rxysqrt
+    arma::mat E = Z * L.t();  // max_draws x p1
+
+    // 计算 z0 = beta / se
+    arma::vec z0 = arma::conv_to<arma::vec>::from(beta_i / se_i);
+
+    std::vector<arma::rowvec> accepted;
+    accepted.reserve(B);
+
+    // 步骤4: 逐个检查是否满足条件，直到接受 B 个或用完所有抽样
+    for (int draw = 0; draw < max_draws; ++draw) {
+      if ((int)accepted.size() >= B) break;
+
+      arma::vec e = E.row(draw).t();
       arma::vec z_star = z0 + e;
 
       double chisq;
@@ -83,46 +105,51 @@ List RaoBlackwell(NumericMatrix beta_select,
         arma::vec e_se = e % arma::trans(se_i);
         arma::rowvec beta_star = beta_i - arma::trans(e_se) / (eta * eta);
         accepted.push_back(beta_star);
-        ++accept_count;
       }
     }
 
-    if (accepted.size() >= 10) {
-      // Sufficient samples: use correction
+    // 步骤5: 根据接受样本数量决定如何处理
+    if ((int)accepted.size() >= min_accept) {
+      // 足够的样本：使用校正
       arma::mat acc_mat(accepted.size(), p1);
       for (size_t j = 0; j < accepted.size(); ++j) {
         acc_mat.row(j) = accepted[j];
       }
+
       BETA_RB.row(i) = arma::mean(acc_mat, 0);
       SE_RB.row(i) = arma::stddev(acc_mat, 0, 0);
       CovList[i] = arma::cov(acc_mat, 0);
 
-      // Record this IV as corrected (thread-safe)
 #pragma omp critical
 {
   corrected_indices.push_back(i + 1);  // R uses 1-based indexing
 }
-
     } else {
-      // Insufficient samples: use original data
+      // 样本不足：使用原始数据，并标记协方差矩阵
       BETA_RB.row(i) = beta_i;
       SE_RB.row(i) = se_i;
+
+      // 创建协方差矩阵并将最后一个对角元设为 -1 作为标记
       CovList[i] = arma::mat(p1, p1, arma::fill::zeros);
+      CovList[i](p1 - 1, p1 - 1) = -1.0;  // 标记为无效
     }
   }
 
   NumericMatrix beta_out = wrap(BETA_RB);
   NumericMatrix se_out = wrap(SE_RB);
+
   beta_out.attr("dimnames") = beta_select.attr("dimnames");
   se_out.attr("dimnames") = se_select.attr("dimnames");
 
-  List cov_list(CovList.size());
+  List cov_list(m);
   for (int i = 0; i < m; ++i) {
     cov_list[i] = wrap(CovList[i]);
   }
 
-  return List::create(Named("BETA_RB") = beta_out,
-                      Named("SE_RB") = se_out,
-                      Named("COV_RB") = cov_list,
-                      Named("CORRECTED_INDICES") = corrected_indices);
+  return List::create(
+    Named("BETA_RB") = beta_out,
+    Named("SE_RB") = se_out,
+    Named("COV_RB") = cov_list,
+    Named("CORRECTED_INDICES") = corrected_indices
+  );
 }

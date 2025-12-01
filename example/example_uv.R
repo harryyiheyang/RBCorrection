@@ -13,11 +13,11 @@ library(devtools)
 library(MRAPSS)
 library(dplyr)
 document()
-devtools::load_all("C:/Users/yxy1234/Downloads/MRcare-main/")
-m=500
-n=10e4
+devtools::load_all("C:/Users/y1363/Downloads/MRcare-main/")
+m=1000
+n=5e5
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
-#Rxy=diag(2)
+Rxy=diag(2)
 BETA=SE=COV=REJ=matrix(0,300,8)
 colnames(BETA)=c("APSS","CARE","BEE-Causal","BEE-Naive","BEE-RBC","BEE-RBS","RAPS-RBS","cML-RBS")
 theta0=0.5
@@ -63,7 +63,7 @@ COV[i,]=covfreq(BETA[i,],SE[i,],theta0)
 REJ[i,]=rejfreq(BETA[i,],SE[i,])
 i=i+1
 if(i%%10==0){
-boxplot(BETA[1:i,],ylim=c(0.4,0.6))
+boxplot(BETA[1:i,],ylim=c(0.45,0.55))
 lines(c(0:8),rep(theta0,9))
 print(colMeans(COV[1:i,]))
 }
