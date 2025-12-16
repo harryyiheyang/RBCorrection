@@ -111,6 +111,7 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
   if(p == 1) {
     bX_RB = as.vector(bX_RB)
     bXse_RB = as.vector(bXse_RB)
+    names(bX_RB)=names(bXse_RB)=rownames(BETA_Select[ind, ])
   }
 
   return(list(bX_RB = bX_RB, bXse_RB = bXse_RB, by_RB = by_RB, byse_RB = byse_RB, COV_RB = res$COV_RB))
