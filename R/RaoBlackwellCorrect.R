@@ -6,6 +6,8 @@
 #' @param BETA_Select A numeric matrix of dimension m x p: effect estimates for selected IVs. Outcome should be the last column.
 #' @param SE_Select A numeric matrix of same dimension: standard errors. Outcome should be the last column.
 #' @param Rxy A (p+1) x (p+1) numeric matrix: covariance matrix of Z statistics. Outcome should be the last column and row.
+#' @param gcov A matrix (2 x 2) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.
+#' @param ldsc A vector (n x 1) of the LDSCs of the IVs.
 #' @param eta Standard deviation of noise added to Z (default = 1).
 #' @param pv.threshold P-value threshold used for selection.
 #' @param B Number of samples used in rejection sampling (default = 1000).
@@ -20,7 +22,7 @@
 #' }
 #'
 #' @export
-RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.threshold,
+RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, gcov=0*diag(BETA_Select[1,]), ldsc=0*BETA_Select[,1], eta = 0.5, pv.threshold,
                                 B = 1000, kappa_thres = 10, onlyexposure = TRUE, warnings = TRUE) {
   if(warnings) {
     cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
@@ -32,6 +34,7 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
 
   # Ensure matrix format with dimnames
   p = ncol(BETA_Select) - 1
+  m = nrow(BETA_Select)
 
   if(onlyexposure == TRUE) {
     cutoff = qchisq(pv.threshold, p, lower.tail = FALSE)
@@ -42,7 +45,13 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
   BETA_Select <- as.matrix(BETA_Select)
   SE_Select <- as.matrix(SE_Select)
   Rxy <- as.matrix(Rxy)
-  Rxysqrt <- matrixsqrt(Rxy)$w
+  RxyList=RxysqrtList=array(0,c(p+1,p+1,m))
+  for(i in 1:m){
+  sei=SE_Select[i,]
+  Rxyi=t(t(Rxy)*sei)*sei+ldsc[i]*gcov
+  RxyList[,,i]=Rxyi
+  RxysqrtList[,,i]=matrixsqrt(Rxyi)$w
+  }
 
   if (is.null(rownames(BETA_Select))) rownames(BETA_Select) <- paste0("SNP", seq_len(nrow(BETA_Select)))
   if (is.null(colnames(BETA_Select))) colnames(BETA_Select) <- paste0("Exp", seq_len(ncol(BETA_Select)))
@@ -52,8 +61,8 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
   res <- RaoBlackwell(
     beta_select = BETA_Select,
     se_select = SE_Select,
-    Rxy = Rxy,
-    Rxysqrt = Rxysqrt,
+    RxyList = RxyList,
+    RxysqrtList = RxysqrtList,
     eta = eta,
     cutoff = cutoff,
     B = B,
@@ -62,11 +71,8 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
     n_threads = floor(parallel::detectCores() / 2)
   )
 
-  res$SE_RB[res$CORRECTED_INDICES, ] = sqrt(SE_Select[res$CORRECTED_INDICES, ]^2 * (1 + 1/eta^2))
-
-  for(i in 1:length(res$COV_RB)) {
-    s = res$SE_RB[i, ]
-    res$COV_RB[[i]] = t(t(Rxy) * s) * s - res$COV_RB[[i]]
+  for(i in res$CORRECTED_INDICES) {
+    res$COV_RB[[i]] = RxyList[,,i]*(1 + 1/eta^2) - res$COV_RB[[i]]
     s = sqrt(diag(res$COV_RB[[i]]))
     s[is.na(s)] = 0
     res$SE_RB[i, ] = s
@@ -78,7 +84,7 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
 
     for (i in seq_along(res$COV_RB)) {
       sevec   = SE_Select[i, ]
-      kapparxy = kappa(t(t(Rxy) * sevec) * sevec)
+      kapparxy = kappa(t(t(Rxy) * sevec) * sevec)+ldsc[i]*gcov
       S        = res$COV_RB[[i]]
       i1       = (diag(S) <= 0)
       i2_flag  = kappa(S) > (thres * kapparxy)
@@ -93,6 +99,7 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, eta = 1, pv.thresho
   }
 
   ind = condition_check(res, thres = kappa_thres)
+  ind = intersect(res$CORRECTED_INDICES,ind)
 
   res$BETA_RB = res$BETA_RB[ind, ]
   res$SE_RB = res$SE_RB[ind, ]

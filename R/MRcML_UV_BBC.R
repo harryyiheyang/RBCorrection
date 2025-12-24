@@ -17,10 +17,6 @@
 #' @param cov_RB A list of length m, where each element is a 2 x 2 matrix of
 #'   Rao–Blackwell correction terms for the joint (exposure, outcome)
 #'   GWAS estimates at a given SNP.
-#' @param gcov A 2 x 2 matrix of the per-SNP genetic covariance between the
-#'   exposure and the outcome. The second row/column should correspond to
-#'   the outcome.
-#' @param ldsc A numeric vector (m x 1) of LD scores of the instruments.
 #' @param max.iter Maximum number of iterations for updating the causal
 #'   effect. Default is 30.
 #' @param max.eps Tolerance for the stopping criterion based on the change
@@ -51,7 +47,7 @@
 #' @importFrom MASS rlm
 #' @export
 
-MRcML_UV_BBC=function(by,bx,byse,bxse,gcov=diag(2)*0,ldsc=rep(0,length(by)),cov_RB,max.iter=50,max.eps=1e-6,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_UV_BBC=function(by,bx,byse,bxse,cov_RB,max.iter=50,max.eps=1e-6,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 ######### Basic Processing  ##############
 by=by/byse
 byseinv=1/byse
@@ -63,7 +59,7 @@ n=m=length(by)
 p=1
 ThetaList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
-A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
+A=cov_RB[[i]]*byseinv[i]^2
 ThetaList[,,i]=solve(A)
 }
 ########## Initial Estimation ############

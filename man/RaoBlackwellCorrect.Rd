@@ -8,7 +8,9 @@ RaoBlackwellCorrect(
   BETA_Select,
   SE_Select,
   Rxy,
-  eta = 1,
+  gcov = 0 * diag(BETA_Select[1, ]),
+  ldsc = 0 * BETA_Select[, 1],
+  eta = 0.5,
   pv.threshold,
   B = 1000,
   kappa_thres = 10,
@@ -22,6 +24,10 @@ RaoBlackwellCorrect(
 \item{SE_Select}{A numeric matrix of same dimension: standard errors. Outcome should be the last column.}
 
 \item{Rxy}{A (p+1) x (p+1) numeric matrix: covariance matrix of Z statistics. Outcome should be the last column and row.}
+
+\item{gcov}{A matrix (2 x 2) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.}
+
+\item{ldsc}{A vector (n x 1) of the LDSCs of the IVs.}
 
 \item{eta}{Standard deviation of noise added to Z (default = 1).}
 

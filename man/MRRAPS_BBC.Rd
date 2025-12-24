@@ -10,8 +10,6 @@ MRRAPS_BBC(
   byse,
   bxse,
   cov_RB,
-  gcov = diag(2) * 0,
-  ldsc = rep(0, length(by)),
   max.iter = 100,
   max.eps = 1e-06,
   lambda = 3,
@@ -35,15 +33,6 @@ yielded by Rao-Blackwell correction.}
 
 \item{bxse}{A numeric vector (m x 1) of standard errors for \code{bx}
 yielded by Rao-Blackwell correction.}
-
-\item{cov_RB}{A list of m matrices of Rao-Blackwell correction terms,
-each of dimension 2 x 2.}
-
-\item{gcov}{A 2 x 2 matrix of the per-SNP genetic covariance between the
-exposure and the outcome. The second row/column should correspond to
-the outcome. Default is a 2 x 2 zero matrix.}
-
-\item{ldsc}{A numeric vector (m x 1) of LD scores of the instruments.}
 
 \item{max.iter}{Maximum number of iterations for updating the causal
 effect. Default is 30.}
@@ -69,6 +58,8 @@ variance of the causal effect. Default is 300.}
 \item{max.prop.pleio}{A numeric value in (0, 1). The maximum allowed proportion  of non-zero pleiotropic terms. Default is 0.5.}
 
 \item{sampling.strategy}{"bootstrap" or "subsampling" (0.5 sample without replacement).}
+
+\item{ldsc}{A numeric vector (m x 1) of LD scores of the instruments.}
 }
 \value{
 A list with the following components:

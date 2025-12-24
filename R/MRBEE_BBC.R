@@ -7,8 +7,6 @@
 #' @param byse A vector (n x 1) of the GWAS effect size SE of outcome yielded by Rao-Blackwell Correction.
 #' @param bXse A matrix (n x p) of the GWAS effect size SEs of p exposuresyielded by Rao-Blackwell Correction.
 #' @param cov_RB A list of m matrices of Rao-Blackwell correction terms, each of dimension (p+1) × (p+1).
-#' @param gcov A matrix (p+1 x p+1) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.
-#' @param ldsc A vector (n x 1) of the LDSCs of the IVs.
 #' @param max.iter Maximum number of iterations for causal effect estimation. Defaults to 30.
 #' @param max.eps Tolerance for stopping criteria. Defaults to 1e-4.
 #' @param pv.thres P-value threshold in pleiotropy detection. Defaults to 0.05.
@@ -28,9 +26,9 @@
 #' @importFrom abind abind
 #' @export
 #'
-MRBEE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling",n_threads=4){
+MRBEE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling",n_threads=4){
 if(is.vector(bX)==T){
-A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy,n_threads=n_threads)
+A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy,n_threads=n_threads)
 A$gamma=A$delta
 A$theta.se=sqrt(A$vartheta)
 }else{
@@ -45,7 +43,7 @@ n=m=length(by)
 p=ncol(bX)
 RxyList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
-A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
+A=cov_RB[[i]]*byseinv[i]^2
 RxyList[,,i]=A
 }
 Rxyall=biasterm(RxyList=RxyList,c(1:n),rep(1,n),n_threads=n_threads)

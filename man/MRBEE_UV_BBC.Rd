@@ -10,8 +10,6 @@ MRBEE_UV_BBC(
   byse,
   bxse,
   cov_RB,
-  gcov = diag(2) * 0,
-  ldsc = rep(0, length(by)),
   max.iter = 50,
   max.eps = 1e-06,
   sampling.time = 300,
@@ -33,10 +31,6 @@ MRBEE_UV_BBC(
 \item{bxse}{A numeric vector (m × 1) of standard errors for `bx` yielded by Rao-Blackwell Correction.}
 
 \item{cov_RB}{A list of m matrices of Rao-Blackwell correction terms, each of dimension 2 × 2.}
-
-\item{gcov}{A matrix (2 x 2) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.}
-
-\item{ldsc}{A vector (n x 1) of the LDSCs of the IVs.}
 
 \item{max.iter}{Maximum number of iterations for updating the causal effect. Default is 30.}
 

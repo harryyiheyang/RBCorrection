@@ -10,8 +10,8 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 List RaoBlackwell(NumericMatrix beta_select,
                   NumericMatrix se_select,
-                  NumericMatrix Rxy,
-                  NumericMatrix Rxysqrt,
+                  arma::cube RxyList,
+                  arma::cube RxysqrtList,
                   double eta,
                   double cutoff,
                   int B,
@@ -25,18 +25,6 @@ List RaoBlackwell(NumericMatrix beta_select,
 
   arma::mat Beta(beta_select.begin(), m, p1, false);
   arma::mat SE(se_select.begin(), m, p1, false);
-  arma::mat R(Rxy.begin(), p1, p1, false);
-
-  if (!R.is_sympd()) stop("Rxy is not symmetric positive definite");
-
-  arma::mat Rinv = arma::inv_sympd(R);
-  arma::mat Rinv_sub;
-  if (onlyexposure) {
-    Rinv_sub = arma::inv_sympd(R.submat(0, 0, p - 1, p - 1));
-  }
-
-  arma::mat Rxysqrt_mat(Rxysqrt.begin(), Rxysqrt.nrow(), Rxysqrt.ncol(), false);
-  arma::mat L = eta * Rxysqrt_mat;
 
   arma::mat BETA_RB(m, p1, arma::fill::zeros);
   arma::mat SE_RB(m, p1, arma::fill::zeros);
@@ -62,21 +50,28 @@ List RaoBlackwell(NumericMatrix beta_select,
     std::normal_distribution<double> norm(0.0, 1.0);
 
     arma::rowvec beta_i = Beta.row(i);
-    arma::rowvec se_i = SE.row(i);
 
-    arma::mat Z(max_draws, p1);
-    for (int draw = 0; draw < max_draws; ++draw) {
-      for (int j = 0; j < p1; ++j) {
-        Z(draw, j) = norm(rng);
-      }
+    arma::mat Sigma_i = RxyList.slice(i);
+    arma::mat Sqrt_i  = RxysqrtList.slice(i);
+
+    arma::mat Sigma_inv;
+    if (onlyexposure) {
+      Sigma_inv = arma::inv_sympd(Sigma_i.submat(0, 0, p - 1, p - 1));
+    } else {
+      Sigma_inv = arma::inv_sympd(Sigma_i);
     }
 
-    Z.each_row() -= arma::mean(Z, 0);
+    arma::mat L = eta * Sqrt_i;
 
+    arma::mat Z_raw(max_draws, p1);
+    for (int draw = 0; draw < max_draws; ++draw) {
+      for (int j = 0; j < p1; ++j) {
+        Z_raw(draw, j) = norm(rng);
+      }
+    }
+    Z_raw.each_row() -= arma::mean(Z_raw, 0);
 
-    arma::mat E = Z * L.t();
-
-    arma::vec z0 = arma::conv_to<arma::vec>::from(beta_i / se_i);
+    arma::mat E = Z_raw * L.t();
 
     std::vector<arma::rowvec> accepted;
     accepted.reserve(B);
@@ -85,20 +80,19 @@ List RaoBlackwell(NumericMatrix beta_select,
       if ((int)accepted.size() >= B) break;
 
       arma::vec e = E.row(draw).t();
-      arma::vec z_star = z0 + e;
+      arma::vec beta_aug = arma::trans(beta_i) + e;
 
       double chisq;
       if (onlyexposure) {
-        arma::vec z_sub = z_star.subvec(0, p - 1);
-        chisq = arma::as_scalar(z_sub.t() * Rinv_sub * z_sub);
+        arma::vec beta_aug_sub = beta_aug.subvec(0, p - 1);
+        chisq = arma::as_scalar(beta_aug_sub.t() * Sigma_inv * beta_aug_sub);
       } else {
-        chisq = arma::as_scalar(z_star.t() * Rinv * z_star);
+        chisq = arma::as_scalar(beta_aug.t() * Sigma_inv * beta_aug);
       }
 
       if (chisq > cutoff) {
-        arma::vec e_se = e % arma::trans(se_i);
-        arma::rowvec beta_star = beta_i - arma::trans(e_se) / (eta * eta);
-        accepted.push_back(beta_star);
+        arma::rowvec beta_init = beta_i - arma::trans(e) / (eta * eta);
+        accepted.push_back(beta_init);
       }
     }
 
@@ -109,8 +103,8 @@ List RaoBlackwell(NumericMatrix beta_select,
       }
 
       BETA_RB.row(i) = arma::mean(acc_mat, 0);
-      SE_RB.row(i) = arma::stddev(acc_mat, 0, 0);
-      CovList[i] = arma::cov(acc_mat, 0);
+      SE_RB.row(i)   = arma::stddev(acc_mat, 0, 0);
+      CovList[i]     = arma::cov(acc_mat, 0);
 
 #pragma omp critical
 {
@@ -118,7 +112,7 @@ List RaoBlackwell(NumericMatrix beta_select,
 }
     } else {
       BETA_RB.row(i) = beta_i;
-      SE_RB.row(i) = se_i;
+      SE_RB.row(i)   = SE.row(i);
 
       CovList[i] = arma::mat(p1, p1, arma::fill::zeros);
       CovList[i](p1 - 1, p1 - 1) = -1.0;

@@ -57,9 +57,9 @@ pv[ii]=pchisq(chisq,p,lower.tail=F)
 }
 indselect=which(pv<iv.thes)
 RB=RaoBlackwellCorrect(BETA_Select=BETAMatrix[indselect,],SE_Select=SEMatrix[indselect,],Rxy=Rxy,pv.threshold=iv.thes,eta=eta,B=5000)
-fit2=MRBEE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
-fit3=GRAPPLE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
-fit4=MRcML_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB,gcov=diag(p+1)*0,ldsc=rep(0,length(RB$by_RB)))
+fit2=MRBEE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB)
+fit3=GRAPPLE_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB)
+fit4=MRcML_BBC(bX=RB$bX_RB,bXse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,cov_RB=RB$COV_RB)
 
 #bX=RB$bX_RB;bXse=RB$bXse_RB;by=RB$by_RB;byse=RB$byse_RB;pv.thres=0.05;cov_RB=RB$COV_RB;gcov=diag(p+1)*0;ldsc=rep(0,length(RB$by_RB));max.iter=10;max.eps=1e-4;lambda=2;a=3;tau_upper=10;sampling.time=300;n_threads=4
 

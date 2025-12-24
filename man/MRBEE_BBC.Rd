@@ -9,8 +9,6 @@ MRBEE_BBC(
   bX,
   byse,
   bXse,
-  gcov,
-  ldsc,
   cov_RB,
   max.iter = 50,
   max.eps = 1e-06,
@@ -31,10 +29,6 @@ MRBEE_BBC(
 \item{byse}{A vector (n x 1) of the GWAS effect size SE of outcome yielded by Rao-Blackwell Correction.}
 
 \item{bXse}{A matrix (n x p) of the GWAS effect size SEs of p exposuresyielded by Rao-Blackwell Correction.}
-
-\item{gcov}{A matrix (p+1 x p+1) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.}
-
-\item{ldsc}{A vector (n x 1) of the LDSCs of the IVs.}
 
 \item{cov_RB}{A list of m matrices of Rao-Blackwell correction terms, each of dimension (p+1) × (p+1).}
 

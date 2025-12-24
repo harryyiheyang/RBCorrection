@@ -14,11 +14,6 @@
 #'   yielded by Rao-Blackwell correction.
 #' @param bxse A numeric vector (m x 1) of standard errors for \code{bx}
 #'   yielded by Rao-Blackwell correction.
-#' @param cov_RB A list of m matrices of Rao-Blackwell correction terms,
-#'   each of dimension 2 x 2.
-#' @param gcov A 2 x 2 matrix of the per-SNP genetic covariance between the
-#'   exposure and the outcome. The second row/column should correspond to
-#'   the outcome. Default is a 2 x 2 zero matrix.
 #' @param ldsc A numeric vector (m x 1) of LD scores of the instruments.
 #' @param max.iter Maximum number of iterations for updating the causal
 #'   effect. Default is 30.
@@ -49,7 +44,7 @@
 #' @importFrom MASS rlm
 #' @export
 
-MRRAPS_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=100,max.eps=1e-6,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRRAPS_BBC=function(by,bx,byse,bxse,cov_RB,max.iter=100,max.eps=1e-6,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 eta = MCP_simulation(iter=5e4, lambda=lambda, gamma=a)
 by=by/byse
 byseinv=1/byse
@@ -67,7 +62,7 @@ indvalid=which(abs(e)<=3*stats::mad(e))
 indvalid=validadj(abs(e),indvalid,0.5)
 RxyList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
-A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
+A=cov_RB[[i]]*byseinv[i]^2
 RxyList[,,i]=A
 }
 ########## Iteration ###################
@@ -88,14 +83,14 @@ gamma=mcp(e,lam=lambda*pmax(1,sqrt(var_vec)),a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 g_theta=-sum(bx*(e-gamma)/var_vec)-sum(var_cor*(e-gamma)^2/var_vec^2)
 Hinv=sum(bx*bx/var_vec)-bias_correction
-theta=theta-g_theta/Hinv
+theta=theta-g_theta/Hinv*runif(1,0.2,1)
 tau_eq <- function(tau) {
 z <- (e - gamma) / sqrt(gra_stat$var_vec + tau)
 sum(rho_mcp(z, lambda = lambda, gamma = a)) - m * eta
 }
 tau <- solve_tau(tau_eq, tau_upper)
 iter=iter+1
-if(iter>5) error=abs(theta-theta1)
+if(iter>10) error=abs(theta-theta1)
 }
 
 ################# Inference ##############
@@ -128,14 +123,14 @@ gammai=mcp(ei,lam=lambda*pmax(1,sqrt(var_veci)),a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 g_thetai=-sum(bxi*(ei-gammai)/var_veci)-sum(var_cori*(ei-gammai)^2/var_veci^2)
 Hinvi=sum(bxi*bxi/var_veci)-bias_correctioni
-thetai=thetai-g_thetai/Hinvi
+thetai=thetai-g_thetai/Hinvi*runif(1,0.2,1)
 tau_eqi <- function(taui) {
 z <- (ei - gammai) / sqrt(gra_stati$var_vec + taui)
 sum(rho_mcp(z, lambda = lambda, gamma = a)) - mi * eta
 }
 taui <- solve_tau(tau_eqi, tau_upper)
 iteri=iteri+1
-if(iteri>5) errori=abs(thetai-theta1i)
+if(iteri>10) errori=abs(thetai-theta1i)
 }
 ThetaVec[i]=thetai
 }

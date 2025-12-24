@@ -17,10 +17,6 @@
 #' @param bXse A matrix (n x p) of the standard errors of \code{bX}
 #'   after Rao–Blackwell correction. If univariable, \code{bXse} can be
 #'   a vector of length n.
-#' @param gcov A ((p+1) x (p+1)) matrix of the per-SNP genetic covariance
-#'   of the p exposures and the outcome. The last row/column corresponds
-#'   to the outcome.
-#' @param ldsc A vector (n x 1) of LD scores of the instruments.
 #' @param cov_RB A list of length n, where each element is a ((p+1) x (p+1))
 #'   matrix of Rao–Blackwell correction terms for the joint
 #'   (exposures, outcome) GWAS estimates at a given SNP.
@@ -64,12 +60,12 @@
 #' @import CppMatrix
 #' @export
 
-MRcML_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
-A=MRcML_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
+A=MRcML_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
 }else{
 ######### Basic Processing  ##############
-fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,gcov=gcov,ldsc=ldsc,max.iter=max.iter,max.eps=max.eps)
+fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,sampling.time=10)
 by=by/byse
 byseinv=1/byse
 bX=bX*byseinv
@@ -80,7 +76,7 @@ n=m=length(by)
 p=ncol(bX)
 ThetaList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
-A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
+A=cov_RB[[i]]*byseinv[i]^2
 ThetaList[,,i]=solve(A)
 }
 ########## Initial Estimation ############

@@ -9,8 +9,6 @@ GRAPPLE_BBC(
   bX,
   byse,
   bXse,
-  gcov,
-  ldsc,
   cov_RB,
   max.iter = 100,
   max.eps = 1e-06,
@@ -37,12 +35,6 @@ after Rao-Blackwell correction.}
 \item{bXse}{A matrix (n x p) of the standard errors of \code{bX}
 after Rao-Blackwell correction. If univariable, \code{bXse} can be a
 vector of length n.}
-
-\item{gcov}{A matrix ((p+1) x (p+1)) of the per-SNP genetic covariance
-of the p exposures and the outcome. The last row/column corresponds
-to the outcome.}
-
-\item{ldsc}{A vector (n x 1) of LD scores of the instruments.}
 
 \item{cov_RB}{A list of length n, where each element is a (p+1 x p+1)
 matrix of Rao-Blackwell correction terms for the joint

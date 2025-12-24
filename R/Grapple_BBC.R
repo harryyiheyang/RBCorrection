@@ -15,10 +15,6 @@
 #' @param bXse A matrix (n x p) of the standard errors of \code{bX}
 #'   after Rao-Blackwell correction. If univariable, \code{bXse} can be a
 #'   vector of length n.
-#' @param gcov A matrix ((p+1) x (p+1)) of the per-SNP genetic covariance
-#'   of the p exposures and the outcome. The last row/column corresponds
-#'   to the outcome.
-#' @param ldsc A vector (n x 1) of LD scores of the instruments.
 #' @param cov_RB A list of length n, where each element is a (p+1 x p+1)
 #'   matrix of Rao-Blackwell correction terms for the joint
 #'   (exposures, outcome) GWAS estimates at a given SNP.
@@ -61,12 +57,12 @@
 #' @import CppMatrix
 #' @export
 
-GRAPPLE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=100,max.eps=1e-6,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+GRAPPLE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=100,max.eps=1e-6,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
-A=MRRAPS_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,tau_upper=tau_upper,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
+A=MRRAPS_BBC(by=by,bx=bX,byse=byse,bxse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,tau_upper=tau_upper,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
 }else{
 ######### Basic Processing  ##############
-fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,gcov=gcov,ldsc=ldsc,max.iter=max.iter,max.eps=max.eps)
+fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,sampling.time=10)
 by=by/byse
 byseinv=1/byse
 bX=bX*byseinv
@@ -78,7 +74,7 @@ n=m=length(by)
 p=ncol(bX)
 RxyList=array(0,c(p+1,p+1,m))
 for(i in 1:m){
-A=(cov_RB[[i]]+ldsc[i]*gcov)*byseinv[i]^2
+A=cov_RB[[i]]*byseinv[i]^2
 RxyList[,,i]=A
 }
 ########## Initial Estimation ############
@@ -104,7 +100,7 @@ gamma=mcp(e,lam=lambda*pmax(1,sqrt(var_vec)),a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 g_theta=-matrixVectorMultiply(t(bX),(e-gamma)*var_vec)-matrixVectorMultiply(t(var_cor),(e-gamma)^2*var_vecinv^2)
 Hinv=matrixMultiply(t(bX),bX*(var_vecinv))-bias_correction
-Hinv=max(0.2,1.1-iter/10)*matrixInverse(Hinv)
+Hinv=runif(1,0.2,1)*matrixInverse(Hinv)
 theta=theta-as.vector(Hinv%*%g_theta)
 tau_eq <- function(tau) {
 z <- (e - gamma) / sqrt(gra_stat$var_vec + tau)
@@ -146,7 +142,7 @@ gammai=mcp(ei,lam=pmax(1,lambda*sqrt(var_veci)),a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 g_thetai=-matrixVectorMultiply(t(bXi),(ei-gammai)*var_vecinvi)-matrixVectorMultiply(t(var_cori),(ei-gammai)^2*var_vecinvi^2)
 Hinvi=matrixMultiply(t(bXi),bXi*var_vecinvi)-bias_correctioni
-Hinvi=max(0.2,1.1-iteri/10)*matrixInverse(Hinvi)
+Hinvi=runif(1,0.2,1)*matrixInverse(Hinvi)
 thetai=thetai-as.vector(Hinvi%*%g_thetai)
 tau_eqi <- function(taui) {
 z <- (ei - gammai) / sqrt(gra_stati$var_vec + taui)

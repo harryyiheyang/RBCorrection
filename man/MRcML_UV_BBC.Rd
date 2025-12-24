@@ -9,8 +9,6 @@ MRcML_UV_BBC(
   bx,
   byse,
   bxse,
-  gcov = diag(2) * 0,
-  ldsc = rep(0, length(by)),
   cov_RB,
   max.iter = 50,
   max.eps = 1e-06,
@@ -34,12 +32,6 @@ after Rao–Blackwell correction.}
 
 \item{bxse}{A numeric vector (m x 1) of standard errors for \code{bx}
 after Rao–Blackwell correction.}
-
-\item{gcov}{A 2 x 2 matrix of the per-SNP genetic covariance between the
-exposure and the outcome. The second row/column should correspond to
-the outcome.}
-
-\item{ldsc}{A numeric vector (m x 1) of LD scores of the instruments.}
 
 \item{cov_RB}{A list of length m, where each element is a 2 x 2 matrix of
 Rao–Blackwell correction terms for the joint (exposure, outcome)
