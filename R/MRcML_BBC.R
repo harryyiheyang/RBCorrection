@@ -104,10 +104,10 @@ H=matrixMultiply(t(bXest),bXest*Thetayy)
 g=matrixVectorMultiply(t(bXest),(by-gamma)*Thetayy+rowSums((bX-bXest)*t(ThetaX2y)))
 theta=as.vector(solve(H)%*%g)
 res=rowSums((bX-bXest)*t(ThetaX2y))/Thetayy+by-matrixVectorMultiply(bXest,theta)
-gamma=mcp(res,lam=lambda/Thetayy*byse,a=a)
+gamma=mcp(res,lam=lambda/Thetayy,a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 iter=iter+1
-if(iter>10) error=sqrt(sum((theta-theta1)^2))
+if(iter>10) error=sqrt(sum((theta-theta1)^2))/sqrt(length(theta))
 }
 ################# Inference ##############
 ThetaMatrix=matrix(0,sampling.time,p)
@@ -136,10 +136,10 @@ Hi=matrixMultiply(t(bXesti),bXesti*Thetayyi)
 gi=matrixVectorMultiply(t(bXesti),(byi-gammai)*Thetayyi+rowSums((bXi-bXesti)*t(ThetaX2yi)))
 thetai=as.vector(solve(Hi)%*%gi)
 resi=rowSums((bXi-bXesti)*t(ThetaX2yi))/Thetayyi+byi-matrixVectorMultiply(bXesti,thetai)
-gammai=mcp(resi,lam=lambda/Thetayyi*byse[ind],a=a)
+gammai=mcp(resi,lam=lambda/Thetayyi,a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 iteri=iteri+1
-if(iteri>7) errori=sqrt(sum((thetai-theta1i)^2))
+if(iteri>7) errori=sqrt(sum((thetai-theta1i)^2))/sqrt(length(theta))
 }
 ThetaMatrix[i,]=thetai
 }

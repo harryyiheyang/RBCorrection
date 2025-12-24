@@ -28,7 +28,7 @@
 #' @importFrom abind abind
 #' @export
 
-MRBEE_UV_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=30,max.eps=1e-04,sampling.time=300,sampling.strategy="subsampling",n_threads,
+MRBEE_UV_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=50,max.eps=1e-06,sampling.time=300,sampling.strategy="subsampling",n_threads,
                     pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak"){
 by=by/byse
 byseinv=1/byse
@@ -62,11 +62,11 @@ indvalid.cut=which(pv>=stats::quantile(pv,0.5))
 indvalid=union(indvalid,indvalid.cut)
 }
 var_e=mean(e[indvalid]^2)
-h=sum(bx[indvalid]^2)-sum(RxyList[1,1,indvalid]*e[indvalid]^2/var_e)
-g=sum(bx[indvalid]*by[indvalid])-sum(RxyList[1,2,indvalid]*e[indvalid]^2/var_e)
+h=sum(bx[indvalid]^2)-sum(RxyList[1,1,indvalid])
+g=sum(bx[indvalid]*by[indvalid])-sum(RxyList[1,2,indvalid])
 theta=g/h
 iter=iter+1
-if (iter>5) error=abs(theta-theta1)
+if (iter>8) error=abs(theta-theta1)
 }
 e[indvalid]=0
 ################# Inference ##############
@@ -98,8 +98,8 @@ if (length(indvalidi)<=length(pvi)*0.5) {
   indvalidi=union(indvalidi,indvalid.cut)
 }
 var_ei=mean(ei[indvalidi]^2)
-hi=sum(bxi[indvalidi]^2)-sum(RxyListi[1,1,indvalidi]*ei[indvalidi]^2/var_ei)
-gi=sum(bxi[indvalidi]*byi[indvalidi])-sum(RxyListi[1,2,indvalidi]*ei[indvalidi]^2/var_ei)
+hi=sum(bxi[indvalidi]^2)-sum(RxyListi[1,1,indvalidi])
+gi=sum(bxi[indvalidi]*byi[indvalidi])-sum(RxyListi[1,2,indvalidi])
 thetai=gi/hi
 iteri=iteri+1
 if (iteri>7) errori=abs(thetai-theta1i)

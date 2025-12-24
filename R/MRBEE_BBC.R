@@ -28,7 +28,7 @@
 #' @importFrom abind abind
 #' @export
 #'
-MRBEE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=30,max.eps=1e-4,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling",n_threads=4){
+MRBEE_BBC=function(by,bX,byse,bXse,gcov,ldsc,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling",n_threads=4){
 if(is.vector(bX)==T){
 A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,ldsc=ldsc,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy,n_threads=n_threads)
 A$gamma=A$delta
@@ -76,7 +76,7 @@ Hinv=matrixInverse(Hinv)
 g=matrixVectorMultiply(t(bX[indvalid,]),by[indvalid])-Rxysum[1+p,1:p]
 theta=matrixVectorMultiply(Hinv,g)
 iter=iter+1
-if(iter>5) error=sqrt(sum((theta-theta1)^2))
+if(iter>5) error=sqrt(sum((theta-theta1)^2))/sqrt(length(theta))
 }
 e[indvalid]=0
 ################# Inference ##############
@@ -113,7 +113,7 @@ Hinvi=matrixInverse(Hinvi)
 gi=matrixVectorMultiply(t(bXi[indvalidi,]),byi[indvalidi])-Rxysumi[1+p,1:p]
 thetai=matrixVectorMultiply(Hinvi,gi)
 iteri=iteri+1
-if(iteri>5) errori=sqrt(sum((thetai-theta1i)^2))
+if(iteri>5) errori=sqrt(sum((thetai-theta1i)^2))/sqrt(length(theta))
 }
 ThetaMatrix[i,]=thetai
 }

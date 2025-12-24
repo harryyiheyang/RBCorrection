@@ -51,7 +51,7 @@
 #' @importFrom MASS rlm
 #' @export
 
-MRcML_UV_BBC=function(by,bx,byse,bxse,gcov=diag(2)*0,ldsc=rep(0,length(by)),cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_UV_BBC=function(by,bx,byse,bxse,gcov=diag(2)*0,ldsc=rep(0,length(by)),cov_RB,max.iter=50,max.eps=1e-6,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 ######### Basic Processing  ##############
 by=by/byse
 byseinv=1/byse
@@ -88,7 +88,7 @@ H=sum(bxest^2*Thetayy)
 g=sum(bxest*(by-gamma)*Thetayy)+sum(bxest*(bx-bxest)*ThetaX2y)
 theta=g/H
 res=(bx-bxest)*ThetaX2y/Thetayy+by-bxest*theta
-gamma=mcp(res,lam=lambda/Thetayy*byse,a=a)
+gamma=mcp(res,lam=lambda/Thetayy,a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 iter=iter+1
 if(iter>10) error=abs(theta-theta1)
@@ -120,7 +120,7 @@ Hi=sum(bxesti^2*Thetayyi)
 gi=sum(bxesti*(byi-gammai)*Thetayyi)+sum(bxesti*(bxi-bxesti)*ThetaX2yi)
 thetai=gi/Hi
 resi=(bxi-bxesti)*ThetaX2yi/Thetayyi+byi-bxesti*thetai
-gammai=mcp(resi,lam=lambda/Thetayyi*byse[ind],a=a)
+gammai=mcp(resi,lam=lambda/Thetayyi,a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 iteri=iteri+1
 if(iteri>7) errori=abs(thetai-theta1i)

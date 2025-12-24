@@ -49,7 +49,7 @@
 #' @importFrom MASS rlm
 #' @export
 
-MRRAPS_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=30,max.eps=1e-05,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRRAPS_BBC=function(by,bx,byse,bxse,cov_RB,gcov=diag(2)*0,ldsc=rep(0,length(by)),max.iter=100,max.eps=1e-6,lambda=3,a=3,tau_upper=10,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 eta = MCP_simulation(iter=5e4, lambda=lambda, gamma=a)
 by=by/byse
 byseinv=1/byse
@@ -87,7 +87,7 @@ bias_correction=c(gra_stat$bias_correction)
 gamma=mcp(e,lam=lambda*pmax(1,sqrt(var_vec)),a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 g_theta=-sum(bx*(e-gamma)/var_vec)-sum(var_cor*(e-gamma)^2/var_vec^2)
-Hinv=sum(bx*bx/var_vec)-bias_correction+8*sum(var_cor*var_cor*(1/var_vec^2))
+Hinv=sum(bx*bx/var_vec)-bias_correction
 theta=theta-g_theta/Hinv
 tau_eq <- function(tau) {
 z <- (e - gamma) / sqrt(gra_stat$var_vec + tau)
@@ -127,7 +127,7 @@ bias_correctioni=c(gra_stati$bias_correction)
 gammai=mcp(ei,lam=lambda*pmax(1,sqrt(var_veci)),a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 g_thetai=-sum(bxi*(ei-gammai)/var_veci)-sum(var_cori*(ei-gammai)^2/var_veci^2)
-Hinvi=sum(bxi*bxi/var_veci)-bias_correctioni+8*sum(var_cori*var_cori*(1/var_veci^2))
+Hinvi=sum(bxi*bxi/var_veci)-bias_correctioni
 thetai=thetai-g_thetai/Hinvi
 tau_eqi <- function(taui) {
 z <- (ei - gammai) / sqrt(gra_stati$var_vec + taui)

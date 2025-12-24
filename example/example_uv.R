@@ -13,9 +13,9 @@ library(devtools)
 library(MRAPSS)
 library(dplyr)
 document()
-devtools::load_all("C:/Users/yxy1234/Downloads/MRcare-main/")
-m=1000
-n=2.5e5
+devtools::load_all("C:/Users/y1363/Downloads/MRcare-main/")
+m=300
+n=5e5
 Rxy=(matrix(0.5,2,2)+diag(2)/2)
 Rxy=diag(2)
 BETA=SE=COV=REJ=matrix(0,300,8)
@@ -29,8 +29,7 @@ i=1
 while(i<=300){
 indicator=F
 tryCatch({
-betax=rnorm(n=m,mean=0,sd=1)
-betax[sample(m,50)]=0
+betax=mix_normal_generator(m)
 betax=betax/sqrt(sum(betax^2))*sqrt(0.05)
 betay=betax*theta0
 E=mvrnorm(n=m,mu=rep(0,2),Sigma=Rxy)
@@ -50,7 +49,7 @@ fit1=MRBEE.IMRP.UV(by=by[indselect],bx=bx[indselect],byse=byse[indselect],bxse=b
 RB=RB_UV_Analytic(gamma=bx,sigma=bxse,cutoff=sqrt(qchisq(IV.theshold,1,lower.tail=F)),eta=eta)
 fit2=MRBEE.IMRP.UV(by=by[RB$IVselect],byse=byse[RB$IVselect],bx=RB$BETA_RB,bxse=RB$SE_RB,Rxy=Rxy,pv.thres=0.05)
 
-pv=pchisq((bx/bxse)^2+rnorm(m,0,eta)^2,1,lower.tail=F)
+pv=pchisq((bx/bxse+rnorm(m,0,eta))^2,1,lower.tail=F)
 indselect=which(pv<IV.theshold)
 RB=RaoBlackwellCorrect(BETA_Select=cbind(bx[indselect],by[indselect]),SE_Select=cbind(bxse[indselect],byse[indselect]),Rxy=Rxy,eta=eta,pv.threshold=IV.theshold,B=1000,warnings=F)
 fit3=MRBEE_UV_BBC(bx=RB$bX_RB,bxse=RB$bXse_RB,by=RB$by_RB,byse=RB$byse_RB,pv.thres=0.05,cov_RB=RB$COV_RB,gcov=diag(2)*0,sampling.strategy="bootstrap")

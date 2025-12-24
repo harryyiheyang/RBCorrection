@@ -6,16 +6,16 @@ library(dplyr)
 library(CppMatrix)
 document()
 options(bitmapType = "cairo")
-m=1000
-n=5e4
+m=500
+n=1e5
 p=4
 Rbb=matrix(0.5,4,4)+diag(4)*0.5
 Rxy=matrix(0.5,5,5)+diag(5)*0.5
-Rxy=diag(5)
+#Rxy=diag(5)
 Thetaxx=solve(Rxy[1:p,1:p])
 BETA=array(0,c(300,4,5))
 theta0=c(0,0.2,0,0)
-iv.thes=5e-3
+iv.thes=5e-8
 h2=0.05
 eta=0.5
 i=1
@@ -26,8 +26,6 @@ tryCatch({
 betaX=mvrnorm(n=m,mu=rep(0,p),Rbb)
 for(ii in 1:p){
 betax=betaX[,ii]
-ind=sample(m,0.5*m)
-betax[ind]=0
 betax=betax/sqrt(sum(betax^2))*sqrt(h2)
 betaX[,ii]=betax
 }
