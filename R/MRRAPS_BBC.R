@@ -83,7 +83,7 @@ gamma=mcp(e,lam=lambda*pmax(1,sqrt(var_vec)),a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 g_theta=-sum(bx*(e-gamma)/var_vec)-sum(var_cor*(e-gamma)^2/var_vec^2)
 Hinv=sum(bx*bx/var_vec)-bias_correction
-theta=theta-g_theta/Hinv*min(max(1,1.1-iter/10),0.2)
+theta=theta-g_theta/Hinv*max(min(1,1.1-iter/10),0.2)
 tau_eq <- function(tau) {
 z <- (e - gamma) / sqrt(gra_stat$var_vec + tau)
 sum(rho_mcp(z, lambda = lambda, gamma = a)) - m * eta
@@ -123,7 +123,7 @@ gammai=mcp(ei,lam=lambda*pmax(1,sqrt(var_veci)),a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 g_thetai=-sum(bxi*(ei-gammai)/var_veci)-sum(var_cori*(ei-gammai)^2/var_veci^2)
 Hinvi=sum(bxi*bxi/var_veci)-bias_correctioni
-thetai=thetai-g_thetai/Hinvi*min(max(1,1.1-iteri/10),0.2)
+thetai=thetai-g_thetai/Hinvi*max(min(1,1.1-iteri/10),0.2)
 tau_eqi <- function(taui) {
 z <- (ei - gammai) / sqrt(gra_stati$var_vec + taui)
 sum(rho_mcp(z, lambda = lambda, gamma = a)) - mi * eta
