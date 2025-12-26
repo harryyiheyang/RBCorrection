@@ -100,8 +100,8 @@ gamma=mcp(e,lam=lambda*pmax(1,sqrt(var_vec)),a=a)
 gamma=pleio_adj(gamma,max.prop.pleio)
 g_theta=-matrixVectorMultiply(t(bX),(e-gamma)*var_vec)-matrixVectorMultiply(t(var_cor),(e-gamma)^2*var_vecinv^2)
 Hinv=matrixMultiply(t(bX),bX*(var_vecinv))-bias_correction
-Hinv=runif(1,0.2,1)*matrixInverse(Hinv)
-theta=theta-as.vector(Hinv%*%g_theta)
+Hinv=matrixInverse(Hinv)
+theta=theta-as.vector(Hinv%*%g_theta)*min(max(1,1.1-iter/10),0.2)
 tau_eq <- function(tau) {
 z <- (e - gamma) / sqrt(gra_stat$var_vec + tau)
 sum(rho_mcp(z, lambda = lambda, gamma = a)) - m * eta
@@ -142,8 +142,8 @@ gammai=mcp(ei,lam=pmax(1,lambda*sqrt(var_veci)),a=a)
 gammai=pleio_adj(gammai,max.prop.pleio)
 g_thetai=-matrixVectorMultiply(t(bXi),(ei-gammai)*var_vecinvi)-matrixVectorMultiply(t(var_cori),(ei-gammai)^2*var_vecinvi^2)
 Hinvi=matrixMultiply(t(bXi),bXi*var_vecinvi)-bias_correctioni
-Hinvi=runif(1,0.2,1)*matrixInverse(Hinvi)
-thetai=thetai-as.vector(Hinvi%*%g_thetai)
+Hinvi=matrixInverse(Hinvi)
+thetai=thetai-as.vector(Hinvi%*%g_thetai)*min(max(1,1.1-iteri/10),0.2)
 tau_eqi <- function(taui) {
 z <- (ei - gammai) / sqrt(gra_stati$var_vec + taui)
 sum(rho_mcp(z, lambda = lambda, gamma = a)) - mi * eta
