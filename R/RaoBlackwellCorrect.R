@@ -23,7 +23,7 @@
 #'
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, gcov=0*diag(BETA_Select[1,]), ldsc=0*BETA_Select[,1], eta = 0.5, pv.threshold,
-                                B = 1000, kappa_thres = 10, onlyexposure = TRUE, warnings = TRUE) {
+                                B = 1000, kappa_thres = 10, onlyexposure = TRUE, warnings = TRUE, n_threads = min(1,parallel::detectCores()-2)) {
   if(warnings) {
     cat("Please standardize data such that BETA = Zscore/sqrt n and SE = 1/sqrt n\n")
   }
@@ -68,7 +68,7 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, gcov=0*diag(BETA_Se
     B = B,
     min_accept = floor(B/2),
     onlyexposure = onlyexposure,
-    n_threads = floor(parallel::detectCores() / 2)
+    n_threads = n_threads
   )
 
   for(i in res$CORRECTED_INDICES) {
