@@ -60,12 +60,12 @@
 #' @import CppMatrix
 #' @export
 
-MRcML_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,sampling.time=300,n_threads=4,max.prop.pleio=0.5,sampling.strategy="subsampling"){
+MRcML_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=30,max.eps=1e-5,lambda=3,a=3,sampling.time=300,n_threads=1,max.prop.pleio=0.5,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
 A=MRcML_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,lambda=lambda,a=a,sampling.time=sampling.time,n_threads=n_threads,max.prop.pleio=max.prop.pleio,sampling.strategy=sampling.strategy)
 }else{
 ######### Basic Processing  ##############
-fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,sampling.time=10)
+fit.ini=MRBEE_BBC(by=by,bX=bX,byse=byse,bXse=bXse,cov_RB=cov_RB,max.iter=max.iter,max.eps=max.eps,sampling.time=10,n_threads=1)
 by=by/byse
 byseinv=1/byse
 bX=bX*byseinv
