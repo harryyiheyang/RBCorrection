@@ -121,5 +121,7 @@ RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy, gcov=0*diag(BETA_Se
     names(bX_RB)=names(bXse_RB)=rownames(BETA_Select[ind, ])
   }
 
-  return(list(bX_RB = bX_RB, bXse_RB = bXse_RB, by_RB = by_RB, byse_RB = byse_RB, COV_RB = res$COV_RB))
+  return(list(bX_RB = bX_RB, bXse_RB = bXse_RB, by_RB = by_RB, byse_RB = byse_RB, COV_RB = res$COV_RB,
+              CORRECTED_INDICES0 = res$CORRECTED_INDICES,
+              CORRECTED_INDICES = ind))
 }
