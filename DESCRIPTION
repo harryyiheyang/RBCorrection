@@ -19,9 +19,6 @@ Imports:
     MASS,
     CppMatrix,
     Matrix
-LinkingTo:
-    Rcpp,
-    RcppArmadillo
 Depends: R (>= 3.6.0)
 Remotes:
     harryyiheyang/CppMatrix,

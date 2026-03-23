@@ -8,47 +8,34 @@ RaoBlackwellCorrect(
   BETA_Select,
   SE_Select,
   Rxy,
-  gcov = 0 * diag(BETA_Select[1, ]),
-  ldsc = 0 * BETA_Select[, 1],
+  gcov = matrix(0, nrow = ncol(Rxy), ncol = ncol(Rxy)),
+  ldsc = rep(0, nrow(BETA_Select)),
   eta = 0.5,
   pv.threshold,
-  B = 1000,
   kappa_thres = 10,
-  onlyexposure = TRUE,
   warnings = TRUE
 )
 }
 \arguments{
-\item{BETA_Select}{A numeric matrix of dimension m x p: effect estimates for selected IVs. Outcome should be the last column.}
+\item{BETA_Select}{A numeric matrix of dimension m x p+1: effect estimates.}
 
-\item{SE_Select}{A numeric matrix of same dimension: standard errors. Outcome should be the last column.}
+\item{SE_Select}{A numeric matrix of same dimension: standard errors.}
 
-\item{Rxy}{A (p+1) x (p+1) numeric matrix: covariance matrix of Z statistics. Outcome should be the last column and row.}
+\item{Rxy}{A (p+1) x (p+1) correlation matrix of Z-statistics.}
 
-\item{gcov}{A matrix (2 x 2) of the per-snp genetic covariance matrix of the p exposures and outcome. The last one should be the outcome.}
+\item{gcov}{A (p+1) x (p+1) matrix of per-SNP genetic covariances.}
 
-\item{ldsc}{A vector (n x 1) of the LDSCs of the IVs.}
+\item{ldsc}{A numeric vector of length m: LD scores for each SNP.}
 
-\item{eta}{Standard deviation of noise added to Z (default = 1).}
+\item{eta}{Randomization parameter controlling noise level (default = 0.5).}
 
-\item{pv.threshold}{P-value threshold used for selection.}
+\item{pv.threshold}{P-value threshold for IV selection (e.g., 5e-8).}
 
-\item{B}{Number of samples used in rejection sampling (default = 1000).}
+\item{kappa_thres}{Numeric threshold for condition number filtering. Default is 10.}
 
-\item{kappa_thres}{Numeric threshold controlling the removal of SNPs with unstable RBC covariance; if the condition number of the corrected covariance exceeds kappa_thres * kappa(Rxy) the SNP is discarded. Defaults to \code{10}.}
-
-\item{onlyexposure}{A indicator of whether considering outcome when selecting IVs. Defaults to \code{TRUE}.}
-
-\item{warnings}{A indicator of whether printing warnings. Defaults to \code{TRUE}.}
-}
-\value{
-A list containing:
-\describe{
-  \item{\code{BETA_RB}}{Corrected effect estimates (m x p).}
-  \item{\code{SE_RB}}{Corrected standard errors (m x p).}
-}
+\item{warnings}{Logical. Print data standardization reminder? Default is TRUE.}
 }
 \description{
-Performs Rao-Blackwell correction via rejection sampling for each selected IV
-based on randomized multivariate chi-square test.
+Performs Rao-Blackwell correction for instrumental variables using an analytic
+closed-form solution based on noncentral chi-square distribution theory.
 }
