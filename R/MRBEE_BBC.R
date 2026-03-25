@@ -18,7 +18,6 @@
 #' @param sampling.strategy Character string indicating the resampling
 #'   strategy, either \code{"bootstrap"} (sampling with replacement) or
 #'   \code{"subsampling"} (using 50\% of the instruments without replacement).
-#' @param n_threads The number of threads. Defaults to 4.
 #'
 #' @return A list containing the estimated causal effect, its covariance, and pleiotropy
 #' @importFrom MASS rlm
@@ -26,9 +25,9 @@
 #' @importFrom abind abind
 #' @export
 #'
-MRBEE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling",n_threads=4){
+MRBEE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
-A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy,n_threads=n_threads)
+A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy)
 A$gamma=A$delta
 A$theta.se=sqrt(A$vartheta)
 }else{
@@ -46,7 +45,7 @@ for(i in 1:m){
 A=cov_RB[[i]]*byseinv[i]^2
 RxyList[,,i]=A
 }
-Rxyall=biasterm(RxyList=RxyList,c(1:n),rep(1,n),n_threads=n_threads)
+Rxyall=biasterm(RxyList=RxyList,c(1:n),rep(1,n))
 ########## Initial Estimation ############
 fit=MASS::rlm(by~bX-1)
 theta.ini=fit$coefficient
@@ -68,7 +67,7 @@ indvalid.cut = which(pv >= stats::quantile(pv, 0.5))
 indvalid = union(indvalid, indvalid.cut)
 }
 var_e=mean(e[indvalid]^2)
-Rxysum=biasterm(RxyList=RxyList,indvalid = indvalid,weight = e^2/var_e,n_threads = n_threads)
+Rxysum=biasterm(RxyList=RxyList,indvalid=indvalid,weight=e^2/var_e)
 Hinv=matrixMultiply(t(bX[indvalid,]),bX[indvalid,])-Rxysum[1:p,1:p]
 Hinv=matrixInverse(Hinv)
 g=matrixVectorMultiply(t(bX[indvalid,]),by[indvalid])-Rxysum[1+p,1:p]
@@ -76,8 +75,27 @@ theta=matrixVectorMultiply(Hinv,g)
 iter=iter+1
 if(iter>5) error=sqrt(sum((theta-theta1)^2))/sqrt(length(theta))
 }
+e_full = e
 e[indvalid]=0
 ################# Inference ##############
+if(sampling.time == 0){
+nv = length(indvalid)
+adjf = n / (nv - p)
+D = matrixMultiply(bX[indvalid,], matrixMultiply(Hinv, t(bX[indvalid,])))
+hii = diag(D)
+hii[hii > 0.75] = 0.75
+E = matrix(0, nv, p)
+for(k in 1:nv){
+iv = indvalid[k]
+ek = e_full[iv]
+wk = ek^2 / var_e
+bias_k = RxyList[1:p, p+1, iv] - matrixVectorMultiply(RxyList[1:p, 1:p, iv], theta)
+E[k,] = -bX[iv,] * ek / (1 - hii[k]) + wk * bias_k
+}
+V = matrixMultiply(t(E), E)
+theta.cov = adjf * matrixMultiply(Hinv, matrixMultiply(V, Hinv))
+theta.se = sqrt(diag(theta.cov))
+}else{
 ThetaMatrix=matrix(0,sampling.time,p)
 for(i in 1:sampling.time){
 if(sampling.strategy=="bootstrap"){
@@ -105,7 +123,7 @@ indvalid.cut = which(pvi >= stats::quantile(pvi, 0.5))
 indvalidi = union(indvalidi, indvalid.cut)
 }
 var_ei=mean(ei[indvalidi]^2)
-Rxysumi=biasterm(RxyList=RxyListi,indvalid = indvalidi,weight = ei^2/var_ei,n_threads = n_threads)
+Rxysumi=biasterm(RxyList=RxyListi,indvalid=indvalidi,weight=ei^2/var_ei)
 Hinvi=matrixMultiply(t(bXi[indvalidi,]),bXi[indvalidi,])-Rxysumi[1:p,1:p]
 Hinvi=matrixInverse(Hinvi)
 gi=matrixVectorMultiply(t(bXi[indvalidi,]),byi[indvalidi])-Rxysumi[1+p,1:p]
@@ -117,6 +135,7 @@ ThetaMatrix[i,]=thetai
 }
 theta.cov=cov(ThetaMatrix)
 theta.se=sqrt(diag(theta.cov))
+}
 names(theta)=colnames(bX)
 r=(by-matrixVectorMultiply(bX,theta))*byse1
 r[indvalid]=0

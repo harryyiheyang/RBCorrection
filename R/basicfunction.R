@@ -1,3 +1,30 @@
+#' @export
+reliability.adj=function(bX,S,thres=0.5){
+  p=length(bX)
+  r=rep(1,p)
+  total.var=bX^2
+  error.var=diag(S[1:p,1:p])
+  reliability=(total.var-error.var)/total.var
+  ind=which(reliability<thres)
+  if(length(ind)>0){
+    r[ind]=total.var[ind]/error.var[ind]*(1-thres)
+  }
+  r=sqrt(r)
+  return(r)
+}
+
+biasterm = function(RxyList, indvalid, weight = NULL) {
+  p = dim(RxyList)[1]
+  m = dim(RxyList)[3]
+  if (is.null(weight)) weight = rep(1, m)
+
+  slices = RxyList[, , indvalid, drop = FALSE]
+  w = weight[indvalid]
+
+  mat = matrix(slices, nrow = p * p)
+  result = matrix(matrixVectorMultiply(mat,w), nrow = p)
+  return(result)
+}
 
 IVweight=function(byse,bXse,Rxy){
   bZse=cbind(bXse,byse)

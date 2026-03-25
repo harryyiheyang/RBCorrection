@@ -17,8 +17,7 @@ MRBEE_BBC(
   FDR = T,
   adjust.method = "Sidak",
   sampling.time = 300,
-  sampling.strategy = "subsampling",
-  n_threads = 4
+  sampling.strategy = "subsampling"
 )
 }
 \arguments{
@@ -50,8 +49,6 @@ covariance of the causal effect estimates. Defaults to 300.}
 \item{sampling.strategy}{Character string indicating the resampling
 strategy, either \code{"bootstrap"} (sampling with replacement) or
 \code{"subsampling"} (using 50\% of the instruments without replacement).}
-
-\item{n_threads}{The number of threads. Defaults to 4.}
 }
 \value{
 A list containing the estimated causal effect, its covariance, and pleiotropy
