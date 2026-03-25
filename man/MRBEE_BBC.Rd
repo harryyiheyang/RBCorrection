@@ -15,7 +15,7 @@ MRBEE_BBC(
   pv.thres = 0.05,
   var.est = "variance",
   FDR = T,
-  adjust.method = "Sidak",
+  adjust.method = "BH",
   sampling.time = 300,
   sampling.strategy = "subsampling"
 )

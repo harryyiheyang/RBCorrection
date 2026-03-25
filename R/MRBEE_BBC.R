@@ -25,7 +25,7 @@
 #' @importFrom abind abind
 #' @export
 #'
-MRBEE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="Sidak",sampling.time=300,sampling.strategy="subsampling"){
+MRBEE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="BH",sampling.time=300,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
 A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy)
 A$gamma=A$delta

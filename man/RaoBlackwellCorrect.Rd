@@ -12,30 +12,44 @@ RaoBlackwellCorrect(
   ldsc = rep(0, nrow(BETA_Select)),
   eta = 0.5,
   pv.threshold,
-  kappa_thres = 10,
+  prob_thres = 0.1,
   warnings = TRUE
 )
 }
 \arguments{
-\item{BETA_Select}{A numeric matrix of dimension m x p+1: effect estimates.}
+\item{BETA_Select}{A numeric matrix of dimension m x (p+1): effect estimates.
+Columns 1:p are exposures, column p+1 is the outcome.}
 
 \item{SE_Select}{A numeric matrix of same dimension: standard errors.}
 
-\item{Rxy}{A (p+1) x (p+1) correlation matrix of Z-statistics.}
+\item{Rxy}{A (p+1) x (p+1) correlation matrix of Z-statistics from LDSC intercepts.}
 
-\item{gcov}{A (p+1) x (p+1) matrix of per-SNP genetic covariances.}
+\item{gcov}{A (p+1) x (p+1) matrix of per-SNP genetic covariances (heritability/M from LDSC).
+Default is zero matrix.}
 
-\item{ldsc}{A numeric vector of length m: LD scores for each SNP.}
+\item{ldsc}{A numeric vector of length m: LD scores for each SNP. Default is zero vector.}
 
 \item{eta}{Randomization parameter controlling noise level (default = 0.5).}
 
 \item{pv.threshold}{P-value threshold for IV selection (e.g., 5e-8).}
 
-\item{kappa_thres}{Numeric threshold for condition number filtering. Default is 10.}
+\item{prob_thres}{Minimum selection probability threshold (default = 0.1).
+Variants with selection probability < prob_thres are excluded as low-quality IVs.}
 
 \item{warnings}{Logical. Print data standardization reminder? Default is TRUE.}
 }
+\value{
+A list containing:
+\describe{
+  \item{\code{bX_RB}}{Corrected exposure effect estimates.}
+  \item{\code{bXse_RB}}{Corrected exposure standard errors.}
+  \item{\code{by_RB}}{Corrected outcome effect estimates.}
+  \item{\code{byse_RB}}{Corrected outcome standard errors.}
+  \item{\code{COV_RB}}{List of corrected covariance matrices.}
+  \item{\code{CORRECTED_INDICES}}{Indices of SNPs passing correction.}
+}
+}
 \description{
-Performs Rao-Blackwell correction for instrumental variables using an analytic
-closed-form solution based on noncentral chi-square distribution theory.
+Performs Rao-Blackwell correction for instrumental variables using a closed-form
+solution based on noncentral chi-square distribution theory.
 }
