@@ -10,7 +10,7 @@
 #' @param max.iter Maximum number of iterations for causal effect estimation. Defaults to 30.
 #' @param max.eps Tolerance for stopping criteria. Defaults to 1e-4.
 #' @param pv.thres P-value threshold in pleiotropy detection. Defaults to 0.05.
-#' @param var.est Method for estimating the variance of residual in pleiotropy test. Can be "robust", "variance", or "ordinal". Defaults is "variance" that estimates the variance of residual using median absolute deviation (MAD).
+#' @param var.est Method for estimating the variance of residual in pleiotropy test. Can be "robust" or "variance". Defaults is "variance".
 #' @param FDR Logical. Whether to apply the FDR to convert the p-value to q-value. Defaults to TRUE.
 #' @param adjust.method Method for estimating q-value. Defaults to "Sidak".
 #' @param sampling.time Number of bootstrap iterations used to estimate the
@@ -23,13 +23,14 @@
 #' @importFrom MASS rlm
 #' @import CppMatrix
 #' @importFrom abind abind
+#' @importFrom stats cov quantile runif
 #' @export
 #'
 MRBEE_BBC=function(by,bX,byse,bXse,cov_RB,max.iter=50,max.eps=1e-6,pv.thres=0.05,var.est="variance",FDR=T,adjust.method="BH",sampling.time=300,sampling.strategy="subsampling"){
 if(is.vector(bX)==T){
 A=MRBEE_UV_BBC(by=by,bx=bX,byse=byse,bxse=bXse,max.iter=max.iter,max.eps=max.eps,pv.thres=pv.thres,var.est=var.est,FDR=FDR,adjust.method=adjust.method,cov_RB=cov_RB,sampling.time=sampling.time,sampling.strategy=sampling.strategy)
 A$gamma=A$delta
-A$theta.se=sqrt(A$vartheta)
+A$theta.se=sqrt(A$theta.var)
 }else{
 ######### Basic Processing  ##############
 by=by/byse
@@ -66,6 +67,9 @@ if (length(indvalid) <= length(pv) * 0.5) {
 indvalid.cut = which(pv >= stats::quantile(pv, 0.5))
 indvalid = union(indvalid, indvalid.cut)
 }
+if (length(indvalid) <= p) {
+  stop("Number of valid IVs is ", length(indvalid), "; estimation requires more valid IVs than exposures (p = ", p, ").")
+}
 var_e=mean(e[indvalid]^2)
 Rxysum=biasterm(RxyList=RxyList,indvalid=indvalid,weight=e^2/var_e)
 Hinv=matrixMultiply(t(bX[indvalid,]),bX[indvalid,])-Rxysum[1:p,1:p]
@@ -79,8 +83,11 @@ e_full = e
 e[indvalid]=0
 ################# Inference ##############
 if(sampling.time == 0){
-nv = length(indvalid)
-adjf = n / (nv - p)
+  nv = length(indvalid)
+  if (nv <= p) {
+    stop("Number of valid IVs is ", nv, "; covariance estimation requires more valid IVs than exposures (p = ", p, ").")
+  }
+  adjf = n / (nv - p)
 D = matrixMultiply(bX[indvalid,], matrixMultiply(Hinv, t(bX[indvalid,])))
 hii = diag(D)
 hii[hii > 0.75] = 0.75

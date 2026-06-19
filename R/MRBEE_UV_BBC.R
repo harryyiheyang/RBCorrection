@@ -10,7 +10,7 @@
 #' @param max.iter Maximum number of iterations for updating the causal effect. Default is 30.
 #' @param max.eps Tolerance for stopping criteria. Default is 1e-4.
 #' @param pv.thres P-value threshold used in pleiotropy detection. Default is 0.05.
-#' @param var.est Method for estimating the variance of residuals. One of "robust", "variance", or "ordinal". Default is "variance".
+#' @param var.est Method for estimating the variance of residuals. One of "robust" or "variance". Default is "variance".
 #' @param FDR Logical. Whether to convert p-values to q-values using FDR adjustment. Default is TRUE.
 #' @param adjust.method Method used to adjust p-values. Default is "Sidak".
 #' @param sampling.time Number of bootstrap iterations used to estimate the
@@ -20,10 +20,12 @@
 
 #' @return A list with the following components:
 #' \item{theta}{Estimated causal effect.}
-#' \item{vartheta}{Estimated variance of theta.}
+#' \item{theta.var}{Estimated variance of theta.}
+#' \item{theta.se}{Estimated standard error of theta.}
 #' \item{delta}{Estimated pleiotropic residuals (set to zero for valid IVs).}
 #' @importFrom MASS rlm
 #' @importFrom abind abind
+#' @importFrom stats quantile runif var
 #' @export
 
 MRBEE_UV_BBC=function(by,bx,byse,bxse,cov_RB,max.iter=50,max.eps=1e-06,sampling.time=300,sampling.strategy="subsampling",n_threads,
@@ -67,6 +69,9 @@ iter=iter+1
 if (iter>8) error=abs(theta-theta1)
 }
 e[indvalid]=0
+if (length(indvalid) <= 1) {
+  stop("Number of valid IVs is ", length(indvalid), "; variance estimation requires more than 1 valid IV.")
+}
 ################# Inference ##############
 ThetaVec=c(1:sampling.time)*0
 for(i in 1:sampling.time){
@@ -97,7 +102,7 @@ if (length(indvalidi)<=length(pvi)*0.5) {
 }
 var_ei=mean(ei[indvalidi]^2)
 hi=sum(bxi[indvalidi]^2)-sum(RxyListi[1,1,indvalidi]*ei[indvalidi]^2/var_ei)
-gi=sum(bxi[indvalidi]*byi[indvalidi])-sum(RxyListi[1,2,indvalidi]*e[indvalidi]^2/var_ei)
+gi=sum(bxi[indvalidi]*byi[indvalidi])-sum(RxyListi[1,2,indvalidi]*ei[indvalidi]^2/var_ei)
 thetai=gi/hi
 iteri=iteri+1
 if (iteri>7) errori=abs(thetai-theta1i)

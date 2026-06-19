@@ -37,7 +37,7 @@ MRBEE_BBC(
 
 \item{pv.thres}{P-value threshold in pleiotropy detection. Defaults to 0.05.}
 
-\item{var.est}{Method for estimating the variance of residual in pleiotropy test. Can be "robust", "variance", or "ordinal". Defaults is "variance" that estimates the variance of residual using median absolute deviation (MAD).}
+\item{var.est}{Method for estimating the variance of residual in pleiotropy test. Can be "robust" or "variance". Defaults is "variance".}
 
 \item{FDR}{Logical. Whether to apply the FDR to convert the p-value to q-value. Defaults to TRUE.}
 

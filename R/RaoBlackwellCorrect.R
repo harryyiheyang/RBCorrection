@@ -26,6 +26,7 @@
 #'   \item{\code{CORRECTED_INDICES}}{Indices of SNPs passing correction.}
 #' }
 #'
+#' @importFrom stats pchisq qchisq
 #' @export
 RaoBlackwellCorrect <- function(BETA_Select, SE_Select, Rxy,
                                 gcov = matrix(0, nrow = ncol(Rxy), ncol = ncol(Rxy)),

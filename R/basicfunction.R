@@ -1,3 +1,13 @@
+#' Reliability adjustment for a single covariance matrix
+#'
+#' Computes multiplicative reliability adjustment factors for one instrument.
+#'
+#' @param bX A vector of exposure effect sizes.
+#' @param S A covariance matrix whose exposure block is adjusted.
+#' @param thres Minimum reliability threshold. Defaults to 0.5.
+#'
+#' @return A vector of multiplicative adjustment factors.
+#' @importFrom stats quantile rnorm uniroot
 #' @export
 reliability.adj=function(bX,S,thres=0.5){
   p=length(bX)
@@ -30,10 +40,10 @@ IVweight=function(byse,bXse,Rxy){
   bZse=cbind(bXse,byse)
   p=dim(bZse)[2]
   n=dim(bZse)[1]
-  RxyList=array(0,c(n,p,p))
+  RxyList=array(0,c(p,p,n))
   for(i in 1:n){
     s=bZse[i,]
-    RxyList[i,,]=t(t(Rxy)*s)*s
+    RxyList[,,i]=t(t(Rxy)*s)*s
   }
   return(RxyList)
 }
@@ -53,16 +63,13 @@ matrixsqrt=function(A){
 
 imrpdetect=function(x,theta,RxyList,indvalid,var.est="robust",FDR=T,adjust.method="Sidak"){
   p=length(theta)
+  if (!var.est %in% c("robust", "variance")) {
+    stop("var.est must be either 'robust' or 'variance'.")
+  }
   if(var.est=="robust"){
     varx=stats::mad(x[indvalid])^2
   }
   if(var.est=="variance"){varx=stats::var(x[indvalid])}
-  if(var.est=="ordinal"){
-    varx=x*0
-    for(i in 1:length(x)){
-      varx[i]=c(RxyList[p+1,p+1,i]+t(theta)%*%RxyList[1:p,1:p,i]%*%theta-2*sum(theta*RxyList[p+1,1:p,i]))
-    }
-  }
   pv=stats::pchisq(x^2/varx,1,lower.tail=F)
   if(FDR==T){
     pv=FDRestimation::p.fdr(pvalues=pv,adjust.method=adjust.method,ties.method="random")$fdrs

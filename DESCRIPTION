@@ -15,11 +15,10 @@ RoxygenNote: 7.3.3
 Imports:
     stats,
     abind,
-    data.table,
+    FDRestimation,
     MASS,
-    CppMatrix,
-    Matrix
+    CppMatrix
 Depends: R (>= 3.6.0)
 Remotes:
-    harryyiheyang/CppMatrix,
+    harryyiheyang/CppMatrix
 ORCID: 0000-0001-6563-3579

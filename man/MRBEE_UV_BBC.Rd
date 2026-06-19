@@ -45,7 +45,7 @@ variance of the causal effect. Default is 300.}
 
 \item{pv.thres}{P-value threshold used in pleiotropy detection. Default is 0.05.}
 
-\item{var.est}{Method for estimating the variance of residuals. One of "robust", "variance", or "ordinal". Default is "variance".}
+\item{var.est}{Method for estimating the variance of residuals. One of "robust" or "variance". Default is "variance".}
 
 \item{FDR}{Logical. Whether to convert p-values to q-values using FDR adjustment. Default is TRUE.}
 
@@ -54,7 +54,8 @@ variance of the causal effect. Default is 300.}
 \value{
 A list with the following components:
 \item{theta}{Estimated causal effect.}
-\item{vartheta}{Estimated variance of theta.}
+\item{theta.var}{Estimated variance of theta.}
+\item{theta.se}{Estimated standard error of theta.}
 \item{delta}{Estimated pleiotropic residuals (set to zero for valid IVs).}
 }
 \description{

@@ -11,7 +11,7 @@
 #' @param max.iter Maximum number of iterations for the estimation process. Defaults to 30.
 #' @param max.eps Tolerance level for convergence. Defaults to 1e-4.
 #' @param pv.thres P-value threshold for pleiotropy detection. Defaults to 0.05.
-#' @param var.est Method for estimating the standard error in the pleiotropy test. Can be "robust", "variance", or "ordinal".
+#' @param var.est Method for estimating the standard error in the pleiotropy test. Can be "robust" or "variance".
 #' @param FDR Logical indicating whether to apply False Discovery Rate (FDR) correction. Defaults to TRUE.
 #' @param adjust.method Method for estimating q-values, defaults to "Sidak".
 #'
@@ -55,7 +55,10 @@ iter=iter+1
 if(iter>5) error=sqrt(sum((theta-theta1)^2))
 }
 
-adjf=n/(length(indvalid)-1)
+  if (length(indvalid) <= 1) {
+    stop("Number of valid IVs is ", length(indvalid), "; variance estimation requires more than 1 valid IV.")
+  }
+  adjf=n/(length(indvalid)-1)
 Hat=outer(bx[indvalid],bx[indvalid])/h
 Hat=1-diag(Hat)
 Hat[Hat<0.5]=0.5
